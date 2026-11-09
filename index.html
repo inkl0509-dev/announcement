@@ -1,0 +1,2266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b8f8a">
+<meta name="description" content="Airport announcement console with multilingual voices, flight presets and background music.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Koveli">
+<title>Koveli Announcement · Airport Announcement Console</title>
+<style>
+:root{
+  --bg:#032f31;--panel:#07484a;--panel2:#0b5d5e;--line:#1c7978;
+  --text:#effffd;--muted:#9ed4cf;--cyan:#62f3e8;--blue:#16b9b2;
+  --green:#65f0bd;--amber:#ffd67a;--red:#ff7485;--violet:#8fe4dc;
+  --input:#075354;--accent:#62f3e8;
+  --shadow:0 22px 60px rgba(0,0,0,.35);--radius:22px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:
+radial-gradient(circle at 8% 0%,rgba(75,240,221,.22),transparent 34%),
+radial-gradient(circle at 100% 16%,rgba(25,174,171,.24),transparent 30%),
+linear-gradient(145deg,#022729,#064f50 56%,#033637);
+color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+body{padding:18px}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.shell{max-width:1450px;margin:auto}
+.topbar{
+ display:flex;gap:16px;align-items:center;justify-content:space-between;
+ padding:16px 18px;border:1px solid rgba(255,255,255,.08);
+ background:rgba(3,55,56,.86);backdrop-filter:blur(18px);
+ border-radius:24px;box-shadow:var(--shadow);position:sticky;top:10px;z-index:20
+}
+.brand{display:flex;align-items:center;gap:13px}
+.logo{
+ width:48px;height:48px;border-radius:16px;display:grid;place-items:center;font-size:25px;
+ background:linear-gradient(135deg,#69f5e7,#0fa9a6);box-shadow:0 0 30px rgba(50,213,255,.25)
+}
+.brand h1{font-size:18px;margin:0}.brand small{color:var(--muted)}
+.live-pill{display:flex;align-items:center;gap:8px;color:#b9ffe2;font-size:12px;font-weight:700}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green)}
+.live-pill.on-air{color:#ffd4d8}
+.live-pill.on-air .live-dot{background:var(--red);box-shadow:0 0 12px var(--red)}
+.install-btn{display:none;border:1px solid #62f3e8;background:#0b6865;color:#effffd;border-radius:12px;padding:9px 13px;font-size:12px;font-weight:800}
+.install-btn.show{display:inline-flex}
+.clock{text-align:right}.clock strong{font-size:18px}.clock span{display:block;color:var(--muted);font-size:11px}
+.main{display:grid;grid-template-columns:1fr 380px;gap:18px;margin-top:18px}
+.card{
+ background:linear-gradient(180deg,rgba(7,80,80,.95),rgba(3,46,48,.97));
+ border:1px solid rgba(255,255,255,.07);border-radius:var(--radius);box-shadow:var(--shadow)
+}
+.workspace{padding:18px}
+.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:6px}
+.tab{
+ border:1px solid var(--line);background:#063f41;color:#9fb5cb;padding:11px 15px;border-radius:14px;
+ white-space:nowrap;font-weight:700;font-size:13px
+}
+.tab.active{color:white;background:linear-gradient(135deg,#0b9b94,#08706f);border-color:#42d9ce}
+.section{display:none;margin-top:18px}.section.active{display:block}
+.section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:14px}
+.section-head h2{margin:0;font-size:20px}.section-head p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.badge{font-size:11px;border-radius:999px;padding:7px 10px;background:#0b605f;color:#c0fff8;border:1px solid #2bb9b1}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.field{background:#064143;border:1px solid #16706f;border-radius:16px;padding:10px}
+.field label{display:block;font-size:10px;font-weight:800;letter-spacing:.9px;color:#7fa1bd;margin-bottom:7px;text-transform:uppercase}
+.field input,.field select,.field textarea{
+ width:100%;border:0;outline:0;background:var(--input);color:white;border-radius:11px;padding:11px 12px;
+ border:1px solid #238783
+}
+.field select option{background:#064143;color:#fff}
+.field textarea{min-height:126px;resize:vertical;line-height:1.5}
+.field-hint{display:block;margin-top:6px;font-size:10.5px;color:var(--muted);min-height:13px}
+.field-hint.ok{color:var(--green)}.field-hint.warn{color:var(--amber)}
+.inline{display:flex;gap:8px;align-items:center}
+.switch-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{
+ border:1px solid #24455f;background:#074849;color:#9bb4c9;padding:9px 12px;border-radius:999px;font-size:12px;font-weight:700
+}
+.chip.on{background:#08726f;color:#bdf4ff;border-color:#37cfc4}
+.preview{
+ margin-top:16px;border:1px solid #218f89;background:linear-gradient(145deg,#04383a,#075858);
+ border-radius:18px;padding:15px
+}
+.preview-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:9px}
+.preview-title{font-size:11px;color:#7da4bf;text-transform:uppercase;font-weight:800;letter-spacing:1px}
+.preview-text{font-size:15px;line-height:1.65;color:#ecf7ff;min-height:70px}
+.preview-text.invalid{color:#ffc2cc}
+.preview-en{margin-top:10px;padding-top:10px;border-top:1px dashed #2a8a85;font-size:13px;line-height:1.6;color:#b9dcd8;display:none}
+.preview-en.show{display:block}
+.preview-en b{display:block;font-size:10px;letter-spacing:1px;color:#7da4bf;margin-bottom:4px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;align-items:center}
+.btn{
+ border:0;border-radius:14px;padding:12px 16px;font-weight:800;color:white;background:#0a6665;
+ display:inline-flex;align-items:center;gap:8px
+}
+.btn.primary{background:linear-gradient(135deg,#19c7b9,#087c7b);box-shadow:0 10px 25px rgba(19,201,186,.25)}
+.btn.green{background:linear-gradient(135deg,#159665,#1cc78a)}
+.btn.red{background:linear-gradient(135deg,#a72e42,#e44f66)}
+.btn.amber{background:linear-gradient(135deg,#996914,#d99a26)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.shortcut-hint{font-size:10px;color:#78b8b3;margin-left:auto}
+.side{display:flex;flex-direction:column;gap:18px}
+.side .card{padding:16px}
+.side h3{font-size:14px;margin:0 0 13px}
+.statusbox{background:#043536;border:1px solid #16706e;border-radius:16px;padding:13px}
+.statusrow{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin:7px 0}
+.statusrow span:first-child{color:var(--muted)}
+.meter{height:7px;background:#075153;border-radius:99px;overflow:hidden;margin-top:12px}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));transition:.2s}
+.voice-list{display:grid;gap:10px}
+.side select,.side input[type=range]{
+ width:100%;background:#074849;color:white;border:1px solid #1d3d59;border-radius:11px;padding:10px
+}
+.side input[type=range]{padding:0;accent-color:var(--cyan)}
+.range-label{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+.slider-block{margin-top:12px}
+
+.ready-topbar{
+ display:grid;grid-template-columns:auto repeat(4,minmax(0,1fr));gap:8px;
+ align-items:stretch;margin:12px 0 0
+}
+.ready-topbar-label{
+ display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:900;
+ color:var(--muted);white-space:nowrap
+}
+.ready-flight-btn{
+ min-height:48px;border:1px solid #1b7b78;background:#064648;color:#effffd;
+ border-radius:12px;padding:7px 9px;text-align:left;cursor:pointer
+}
+.ready-flight-btn b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ready-flight-btn span{display:block;margin-top:3px;font-size:10px;color:#8fcac5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35}
+.ready-flight-btn.empty{border-style:dashed;color:#78aaa7;background:#04393a}
+.ready-flight-wrap{position:relative;min-width:0}
+.ready-flight-wrap .ready-flight-btn{width:100%;padding-right:34px}
+.ready-clear{
+ position:absolute;right:6px;top:6px;width:24px;height:24px;border-radius:8px;
+ border:1px solid #2a7775;background:#083f40;color:#b9d7d4;font-size:13px;
+ display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2
+}
+.ready-clear:hover{background:#4b2529;color:#ffd4d8;border-color:#7b4147}
+.preset-stop-btn{
+ position:absolute;right:6px;bottom:7px;z-index:4;
+ border:1px solid #ff8b8b;background:#7b242a;color:#fff;
+ border-radius:7px;padding:4px 7px;font-size:9px;font-weight:900;
+ cursor:pointer;letter-spacing:.35px
+}
+.preset-stop-btn:hover{background:#a62f37}
+.ready-flight-btn.loaded{border-color:#62f3e8;background:#0b5d5e}
+.ready-flight-btn.loading{opacity:.9;cursor:wait;position:relative;overflow:hidden}
+.ready-flight-btn .preset-progress-track{
+ position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(0,0,0,.25);pointer-events:none
+}
+.ready-flight-btn .preset-progress-fill{
+ display:block;height:100%;width:0;background:#fff;opacity:.92;transition:width .22s linear
+}
+.ready-flight-btn.playing{
+ position:relative;overflow:hidden;
+ box-shadow:0 0 0 2px rgba(255,255,255,.78),0 0 16px rgba(98,243,232,.55);
+ animation:presetPlayingPulse 1.35s ease-in-out infinite
+}
+.ready-flight-btn .preset-audio-effect{
+ position:absolute;right:62px;bottom:8px;height:16px;display:flex;align-items:center;gap:2px;pointer-events:none
+}
+.ready-flight-btn .preset-audio-effect i{
+ display:block;width:3px;border-radius:3px;background:#62f3e8;
+ box-shadow:0 0 5px rgba(98,243,232,.65);
+ animation:presetAudioBar .72s ease-in-out infinite alternate
+}
+.ready-flight-btn .preset-audio-effect i:nth-child(1){height:6px;animation-delay:-.55s}
+.ready-flight-btn .preset-audio-effect i:nth-child(2){height:12px;animation-delay:-.35s}
+.ready-flight-btn .preset-audio-effect i:nth-child(3){height:8px;animation-delay:-.65s}
+.ready-flight-btn .preset-audio-effect i:nth-child(4){height:15px;animation-delay:-.2s}
+.ready-flight-btn .preset-audio-effect i:nth-child(5){height:9px;animation-delay:-.48s}
+@keyframes presetAudioBar{0%{transform:scaleY(.35);opacity:.72}100%{transform:scaleY(1);opacity:1}}
+@keyframes presetPlayingPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.22)}}
+@media(prefers-reduced-motion:reduce){
+ .ready-flight-btn.playing,.ready-flight-btn .preset-audio-effect i{animation:none}
+}
+/* Each preset slot gets its own colour so flights are easy to tell apart */
+.ready-flight-wrap:nth-child(2) .ready-flight-btn.loaded{background:#0b5d5e;border-color:#62f3e8}
+.ready-flight-wrap:nth-child(3) .ready-flight-btn.loaded{background:#244f78;border-color:#6db7f2}
+.ready-flight-wrap:nth-child(4) .ready-flight-btn.loaded{background:#66501f;border-color:#e4b84e}
+.ready-flight-wrap:nth-child(5) .ready-flight-btn.loaded{background:#653f72;border-color:#c18bd2}
+.ready-flight-wrap:nth-child(6) .ready-flight-btn.loaded{background:#3f6642;border-color:#7ed887}
+.ready-flight-wrap:nth-child(7) .ready-flight-btn.loaded{background:#754632;border-color:#e6936e}
+.ready-flight-wrap:nth-child(8) .ready-flight-btn.loaded{background:#385a69;border-color:#78bed8}
+.ready-flight-wrap:nth-child(9) .ready-flight-btn.loaded{background:#6b3f52;border-color:#d77d9f}
+.ready-flight-btn.loaded span{color:#e8f5f4}
+.ready-help{font-size:10px;color:#8fcac5;margin-top:7px}
+@media(min-width:901px){.ready-topbar-label{grid-row:1 / span 2;align-self:stretch}}
+@media(max-width:900px){.ready-topbar{grid-template-columns:1fr 1fr}.ready-topbar-label{grid-column:1/-1;padding:0}}
+@media(max-width:520px){.ready-topbar{grid-template-columns:1fr}}
+
+.ready-list{display:grid;gap:8px}
+.ready-slot{border:1px solid #1b7b78;background:#043d3f;border-radius:14px;padding:10px}
+.ready-slot.empty{border-style:dashed;opacity:.72}
+.ready-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.ready-title{font-size:12px;font-weight:900;color:#effffd}
+.ready-meta{font-size:10px;color:#8fcac5;margin-top:3px}
+.ready-text{font-size:10.5px;color:#9ab9b6;line-height:1.4;margin:7px 0 9px}
+.ready-actions{display:flex;gap:6px;flex-wrap:wrap}
+.ready-play{border:1px solid #39bdb5;background:#0b6865;color:#effffd;border-radius:9px;padding:7px 10px;font-size:10px;font-weight:800}
+.ready-count{font-size:10px;color:#8fcac5}
+.backup-row{display:flex;gap:6px;margin:0 0 10px}
+
+.history{max-height:360px;overflow:auto;display:grid;gap:8px}
+.history-item{border:1px solid #176e6d;background:#043d3f;border-radius:14px;padding:10px}
+.history-top{display:flex;justify-content:space-between;gap:8px}
+.history-title{font-size:12px;font-weight:800}.history-time{font-size:10px;color:#718ea7}
+.history-text{font-size:11px;color:#8fa9bf;margin:6px 0 9px;line-height:1.4}
+.mini-actions{display:flex;gap:6px}
+.mini{border:1px solid #21817e;background:#075152;color:#a8c1d6;border-radius:9px;padding:6px 8px;font-size:10px}
+.alert{margin-top:12px;padding:10px 12px;border-radius:12px;font-size:12px;display:none}
+.alert.show{display:block}.alert.ok{background:#0d392c;color:#99f4ce;border:1px solid #1d664e}.alert.err{background:#431c28;color:#ffc2cc;border:1px solid #743146}
+.quick-panel{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.quick{text-align:left;padding:10px;border:1px solid #1b7b78;border-radius:13px;background:#064648;color:#b8ccdc;font-size:11px}
+.quick b{display:block;color:white;margin-bottom:3px}
+.music-box{display:grid;gap:10px}.music-url-row{display:flex;gap:8px}.music-url-row input{flex:1;min-width:0;background:#064b4c;color:white;border:1px solid #23817d;border-radius:11px;padding:10px}.music-player{width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#033637;border:1px solid #1b7774}.music-player iframe{width:100%;height:100%;border:0}.music-controls{display:flex;gap:7px;flex-wrap:wrap}.music-note{color:#8fcac5;font-size:10px;line-height:1.45}
+.footer{color:#78b8b3;font-size:11px;text-align:center;padding:18px}
+.directory-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.directory-btn{padding:7px 10px;font-size:10px;opacity:.9}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,20,22,.72);backdrop-filter:blur(7px);display:none;align-items:center;justify-content:center;padding:18px;z-index:100}
+.modal-backdrop.show{display:flex}
+.modal-card{width:min(460px,100%);background:linear-gradient(180deg,#075153,#033b3d);border:1px solid #278b87;border-radius:20px;box-shadow:0 28px 80px rgba(0,0,0,.5);padding:18px}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.modal-head h3{margin:0;font-size:17px}.modal-close{border:1px solid #2a7775;background:#083f40;color:#d7f8f5;width:32px;height:32px;border-radius:10px;font-size:18px}
+.modal-grid{display:grid;gap:11px}.modal-card .field{padding:9px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+
+@media(max-width:1100px){.main{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr}.grid,.grid.cols-3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){
+ body{padding:9px}.topbar{position:static}.clock{display:none}.main{gap:10px}.workspace{padding:12px}
+ .grid,.grid.cols-3{grid-template-columns:1fr}.side{display:flex}.quick-panel{grid-template-columns:1fr}
+ .brand small{display:none}.tab{padding:10px 12px}.shortcut-hint{display:none}
+}
+.dest-plus,.dest-remove{flex:0 0 36px;width:36px;height:36px;padding:0;display:grid;place-items:center;font-size:20px;font-weight:900;border-radius:10px}
+.dest-plus{color:#d8fffb;border-color:#39bdb5;background:#0b6865}
+.dest-remove{color:#ffd8dc;border-color:#7b4147;background:#4b2529}
+
+.preset-confirm-card{width:min(560px,100%)}
+.preset-confirm-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:4px}
+.preset-confirm-item{background:#043d3f;border:1px solid #1b7774;border-radius:13px;padding:10px 12px}
+.preset-confirm-item span{display:block;color:var(--muted);font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.preset-confirm-item b{font-size:13px;color:#effffd;line-height:1.4}
+.preset-confirm-question{margin:14px 0 2px;padding:12px 13px;border-radius:13px;background:#075354;border:1px solid #238783;font-weight:900;text-align:center}
+@media(max-width:520px){.preset-confirm-summary{grid-template-columns:1fr}}
+
+.yt-auto-music{margin:10px 0;padding:10px;border:1px solid #245f60;border-radius:12px;background:rgba(5,45,47,.42)}
+.yt-search-status{font-size:11px;color:#9dc7c5;margin:8px 2px}
+.yt-text-list{display:grid;gap:5px;max-height:320px;overflow:auto}
+.yt-track{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:8px;align-items:center;width:100%;border:1px solid #245f60;background:#073c3e;color:#e8ffff;border-radius:9px;padding:7px 8px;text-align:left}
+.yt-track:hover{background:#0a4a4c}
+.yt-track.active{border-color:#62f3e8;background:#0b5d5e}
+.yt-track-num{font-size:10px;color:#8fb8b6;text-align:center}
+.yt-track-title{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.yt-track-state{font-size:10px;font-weight:800;color:#62f3e8}
+@media(max-width:650px){.yt-track{grid-template-columns:26px minmax(0,1fr)}.yt-track-state{grid-column:2}}
+
+/* Global Announcement Language control */
+.announcement-language-card{margin-bottom:12px;padding:14px 16px}
+.announcement-language-layout{display:grid;grid-template-columns:minmax(220px,340px) minmax(190px,250px) minmax(0,1fr);gap:16px;align-items:end}
+.announcement-language-field{min-width:0;width:100%}
+.announcement-language-field label{display:block;margin:0 0 7px;font-size:12px;font-weight:800;color:var(--muted)}
+.announcement-language-field select{
+  display:block;width:100%;min-width:0;height:44px;box-sizing:border-box;
+  border:1px solid #238783;border-radius:11px;padding:0 12px;
+  background:var(--input);color:#fff;font:inherit;outline:none
+}
+.announcement-language-field select option{color:#fff;background:#064143}
+.announcement-language-field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(98,243,232,.15)}
+.announcement-language-note{margin:0;align-self:center}
+@media (max-width:900px){.announcement-language-layout{grid-template-columns:1fr 1fr}.announcement-language-note{grid-column:1/-1}}
+@media (max-width:560px){.announcement-language-layout{grid-template-columns:1fr}}
+
+.boarding-options-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(250px,.85fr);gap:12px;align-items:stretch}
+.boarding-groups-field{min-width:0}
+.boarding-groups-field #boardingGroups{width:100%;display:flex;flex-wrap:wrap;gap:8px}
+.boarding-options-stack{display:grid;grid-template-columns:1fr;gap:12px}
+@media (max-width:760px){.boarding-options-layout{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<audio id="airportDingAudio" src="Ding.mp3" preload="auto"></audio>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">🎙️</div>
+      <div><h1>Koveli Announcement</h1><small>Advanced Airport Announcement Console</small></div>
+    </div>
+    <div class="live-pill" id="livePill" role="status" aria-live="polite"><span class="live-dot"></span> <span id="livePillText">SYSTEM READY</span></div>
+    <button class="install-btn" id="installAppBtn" type="button" title="Install Koveli Announcement on this computer">⬇ Install app</button>
+    <div class="clock"><strong id="clock">--:--:--</strong><span id="dateLabel">Local time</span></div>
+  </header>
+  <div class="ready-topbar" id="readyTopbar"><div class="ready-topbar-label">✈ FLIGHT PRESETS</div></div>
+  <div class="ready-help">Set the flight details, then click an empty <b>PRESET</b> button to save it and warm up its voice. When it shows <b>READY · PLAY</b>, click it to play. An <b>Automatic</b> greeting is recalculated at play time, so a morning preset will say "Good afternoon" if played after 12:00.</div>
+
+  <div class="main">
+    <main class="card workspace">
+      <div class="card announcement-language-card">
+        <div class="announcement-language-layout">
+          <div class="announcement-language-field">
+            <label for="bLanguage">Announcement Language</label>
+            <select id="bLanguage">
+              <option value="en">English</option>
+              <option value="ar">Arabic</option>
+              <option value="zh-HK">Chinese — Cantonese (Hong Kong)</option>
+              <option value="zh-CN">Chinese — Mandarin (Mainland)</option>
+              <option value="zh-SG">Chinese — Mandarin (Singapore · SQ)</option>
+              <option value="ru">Russian</option>
+              <option value="it">Italian</option>
+              <option value="ja">Japanese</option>
+            </select>
+          </div>
+          <div class="announcement-language-field">
+            <label for="bBilingual">Also announce in English</label>
+            <select id="bBilingual">
+              <option value="off">No — selected language only</option>
+              <option value="after">Yes — English after</option>
+              <option value="before">Yes — English first</option>
+            </select>
+          </div>
+          <div class="music-note announcement-language-note">The selected language applies to Boarding, Passenger Paging, Delay, Gate Change and Cancellation. With "Also announce in English", the same announcement is repeated in English using an English voice. For Custom, type the announcement in the selected language.</div>
+        </div>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="boarding" role="tab">✈ Boarding</button>
+        <button class="tab" data-tab="paging" role="tab">📟 Passenger Paging</button>
+        <button class="tab" data-tab="delay" role="tab">⏱ Delay</button>
+        <button class="tab" data-tab="gatechange" role="tab">🚪 Gate Change</button>
+        <button class="tab" data-tab="cancel" role="tab">⛔ Cancellation</button>
+        <button class="tab" data-tab="custom" role="tab">📝 Custom</button>
+      </div>
+
+      <section class="section active" id="boarding">
+        <div class="section-head"><div><h2>Flight Boarding Announcement</h2><p>Professional boarding, priority group and final-call scripts.</p></div><span class="badge">LIVE PREVIEW</span></div>
+        <div class="grid cols-3">
+          <div class="field"><label for="bFlight">Flight Number</label><input id="bFlight" value="UL116" placeholder="UL116" autocomplete="off"><small class="field-hint" id="bFlightHint"></small></div>
+          <div class="field"><label for="bDest">Destination</label><div class="inline"><select id="bDest" style="flex:1"></select><button class="mini dest-plus" type="button" id="showDest2" title="Add second destination" aria-label="Add second destination">＋</button></div></div>
+          <div class="field" id="bDest2Field" style="display:none"><label for="bDest2">Destination 2</label><div class="inline"><select id="bDest2" style="flex:1"></select><button class="mini dest-remove" type="button" id="removeDest2" title="Remove second destination" aria-label="Remove second destination">×</button></div></div>
+          <div class="field"><label for="bGate">Gate</label><select id="bGate"></select></div>
+          <div class="field"><label for="bType">Call Type</label><select id="bType">
+            <option value="boarding">Boarding Call</option><option value="priority">Priority / Group Call</option>
+            <option value="final">Final Call</option><option value="closing">Gate Closing</option>
+          </select></div>
+          <div class="field"><label for="bGreeting">Greeting</label><select id="bGreeting">
+            <option value="auto">Automatic</option>
+            <option value="morning">Good morning</option>
+            <option value="afternoon">Good afternoon</option>
+            <option value="evening">Good evening</option>
+            <option value="attention">Attention please</option>
+          </select></div>
+        </div>
+        <div class="boarding-options-layout" style="margin-top:12px">
+          <div class="field boarding-groups-field">
+            <label>Boarding Groups</label>
+            <div class="switch-row" id="boardingGroups" style="margin-top:0"></div>
+            <small style="color:var(--muted)">Select one or more groups, or All passengers.</small>
+          </div>
+          <div class="boarding-options-stack">
+            <div class="field"><label for="bCategory">Passenger Category</label><select id="bCategory"><option value="general">General passengers</option><option value="families">Families with young children</option><option value="assistance">Passengers requiring assistance</option><option value="premium">Business / priority passengers</option></select></div>
+            <div class="field"><label for="bStyle">Language Style (English)</label><select id="bStyle"><option value="standard">Standard professional</option><option value="concise">Concise</option><option value="warm">Warm hospitality</option></select></div>
+          </div>
+        </div>
+        <div class="directory-actions">
+          <button class="mini directory-btn" type="button" id="openDestinationModal">＋ Destination</button>
+          <button class="mini directory-btn" type="button" id="openAirlineModal">＋ Airline</button>
+        </div>
+        <div class="preview"><div class="preview-top"><div class="preview-title">Announcement Preview</div><button class="mini" onclick="copyPreview()">Copy</button></div><div class="preview-text" id="boardingPreview"></div><div class="preview-en" id="boardingPreviewEn"></div></div>
+      </section>
+
+      <section class="section" id="paging">
+        <div class="section-head"><div><h2>Passenger Paging</h2><p>Page a passenger to a selected location.</p></div><span class="badge">NAME-AWARE</span></div>
+        <div class="grid">
+          <div class="field"><label for="pTitle">Title</label><select id="pTitle"><option>Mr.</option><option>Ms.</option><option>Mrs.</option><option>Dr.</option><option>Prof.</option></select></div>
+          <div class="field"><label for="pName">Passenger Name</label><input id="pName" value="James Chen" placeholder="Full name"></div>
+          <div class="field"><label for="pFlight">Flight Number</label><input id="pFlight" value="QR678" autocomplete="off"><small class="field-hint" id="pFlightHint"></small></div>
+          <div class="field"><label for="pLocation">Proceed To</label><input id="pLocation" value="reception desk" list="locationList"></div>
+        </div>
+        <datalist id="locationList">
+          <option value="reception desk"><option value="information desk"><option value="airline service desk"><option value="transfer desk"><option value="boarding gate">
+        </datalist>
+        <div class="switch-row"><button class="chip on" id="pRepeat" onclick="toggleChip(this)">Repeat passenger name</button><button class="chip" id="pUrgent" onclick="toggleChip(this)">Urgent wording</button></div>
+        <div class="preview"><div class="preview-top"><div class="preview-title">Paging Preview</div><button class="mini" onclick="copyPreview()">Copy</button></div><div class="preview-text" id="pagingPreview"></div><div class="preview-en" id="pagingPreviewEn"></div></div>
+      </section>
+
+      <section class="section" id="delay">
+        <div class="section-head"><div><h2>Flight Delay Announcement</h2><p>Choose the delay scenario and optionally announce a revised time.</p></div><span class="badge">OPS MODE</span></div>
+        <div class="grid">
+          <div class="field"><label for="dFlight">Flight Number</label><input id="dFlight" value="EK659" autocomplete="off"><small class="field-hint" id="dFlightHint"></small></div>
+          <div class="field"><label for="dDest">Destination</label><input id="dDest" value="Dubai" list="destinationList"></div>
+          <div class="field"><label for="dReason">Delay Reason</label><select id="dReason"><option value="inbound">Late inbound aircraft</option><option value="operational">Operational reasons</option><option value="weather">Adverse weather</option><option value="technical">Technical reasons</option><option value="airtraffic">Air traffic restrictions</option></select></div>
+          <div class="field"><label for="dTime">Revised Departure</label><input type="time" id="dTime" value="23:45"></div>
+        </div>
+        <div class="switch-row"><button class="chip on" id="dIncludeTime" onclick="toggleChip(this)">Include revised time</button><button class="chip" id="dApology" onclick="toggleChip(this)">Extended apology</button></div>
+        <div class="preview"><div class="preview-top"><div class="preview-title">Delay Preview</div><button class="mini" onclick="copyPreview()">Copy</button></div><div class="preview-text" id="delayPreview"></div><div class="preview-en" id="delayPreviewEn"></div></div>
+      </section>
+
+      <section class="section" id="gatechange">
+        <div class="section-head"><div><h2>Gate Change Announcement</h2><p>Notify passengers clearly when the assigned boarding gate changes.</p></div><span class="badge">HIGH PRIORITY</span></div>
+        <div class="grid">
+          <div class="field"><label for="gFlight">Flight Number</label><input id="gFlight" value="BA061" autocomplete="off"><small class="field-hint" id="gFlightHint"></small></div>
+          <div class="field"><label for="gDest">Destination</label><input id="gDest" value="London Heathrow" list="destinationList"></div>
+          <div class="field"><label for="gOld">Previous Gate</label><select id="gOld"></select></div>
+          <div class="field"><label for="gNew">New Gate</label><select id="gNew"></select></div>
+        </div>
+        <div class="preview"><div class="preview-top"><div class="preview-title">Gate Change Preview</div><button class="mini" onclick="copyPreview()">Copy</button></div><div class="preview-text" id="gatechangePreview"></div><div class="preview-en" id="gatechangePreviewEn"></div></div>
+      </section>
+
+      <section class="section" id="cancel">
+        <div class="section-head"><div><h2>Flight Cancellation</h2><p>Formal cancellation message with optional service-desk instruction.</p></div><span class="badge">IRREGULAR OPS</span></div>
+        <div class="grid">
+          <div class="field"><label for="cFlight">Flight Number</label><input id="cFlight" value="WY384" autocomplete="off"><small class="field-hint" id="cFlightHint"></small></div>
+          <div class="field"><label for="cDest">Destination</label><input id="cDest" value="Muscat" list="destinationList"></div>
+          <div class="field"><label for="cReason">Reason</label><select id="cReason"><option value="operational">Operational reasons</option><option value="weather">Adverse weather conditions</option><option value="technical">Technical reasons</option></select></div>
+          <div class="field"><label for="cDesk">Assistance Point</label><input id="cDesk" value="airline service desk" list="locationList"></div>
+        </div>
+        <div class="preview"><div class="preview-top"><div class="preview-title">Cancellation Preview</div><button class="mini" onclick="copyPreview()">Copy</button></div><div class="preview-text" id="cancelPreview"></div><div class="preview-en" id="cancelPreviewEn"></div></div>
+      </section>
+      <datalist id="destinationList"></datalist>
+
+      <section class="section" id="custom">
+        <div class="section-head"><div><h2>Custom Announcement Studio</h2><p>Write any message and use the same chime, voice and history controls.</p></div><span class="badge">MANUAL</span></div>
+        <div class="field"><label for="customText">Announcement Text</label><textarea id="customText">Attention please. May we have your attention for an important announcement.</textarea></div>
+        <div class="quick-panel">
+          <button class="quick" onclick="setCustom('Attention please. We kindly request all passengers to keep their personal belongings with them at all times. Thank you.')"><b>🧳 Belongings</b>Security reminder</button>
+          <button class="quick" onclick="setCustom('Attention please. Passengers are kindly reminded that smoking and vaping are permitted only in designated areas. Thank you.')"><b>🚭 No Smoking</b>General notice</button>
+          <button class="quick" onclick="setCustom('Attention please. We kindly request passengers to keep all walkways and boarding areas clear. Thank you for your cooperation.')"><b>🚶 Keep Clear</b>Operational notice</button>
+        </div>
+        <div class="preview"><div class="preview-top"><div class="preview-title">Custom Preview</div><button class="mini" onclick="copyPreview()">Copy</button></div><div class="preview-text" id="customPreview"></div></div>
+      </section>
+
+      <div class="actions">
+        <button class="btn primary" id="playBtn">▶ Play Announcement</button>
+        <button class="btn red" id="stopBtn">■ Stop</button>
+        <button class="btn" id="saveBtn">☆ Save to History</button>
+        <span class="shortcut-hint">Ctrl+Enter play · Alt+1–8 presets · Esc stop</span>
+      </div>
+      <div class="alert" id="alert" role="status" aria-live="polite"></div>
+    </main>
+
+    <aside class="side">
+      <div class="card">
+        <h3>🎙 Multilingual Natural Voice</h3>
+        <div class="voice-list">
+          <div><div class="range-label"><span>Voice (for the selected language)</span><button class="mini" id="refreshVoice">Refresh</button></div><select id="voiceSelect" aria-label="Voice"></select></div>
+        </div>
+        <div class="slider-block"><div class="range-label"><span>Announcement volume (voice + chime)</span><span id="announceVolumeVal">100%</span></div><input id="announceVolume" type="range" min="10" max="100" step="5" value="100" aria-label="Announcement volume"></div>
+        <div style="margin-top:12px">
+          <div class="range-label"><span>Playback Mode</span><span id="playModeStatus">Live</span></div>
+          <div class="switch-row">
+            <button class="chip" id="modeAfterLoad">Play After Load</button>
+            <button class="chip on" id="modeLive">Play Live</button>
+          </div>
+          <div class="music-note" id="playModeNote"></div>
+        </div>
+        <div class="switch-row"><button class="chip on" id="autoChime" onclick="toggleChip(this)">Ding.mp3 before speech</button><button class="chip" id="doubleChime" onclick="toggleChip(this)">Double chime</button></div>
+      </div>
+
+      <div class="card">
+        <h3>🎵 YouTube Background Music</h3>
+        <div class="music-box">
+          <div class="yt-auto-music">
+            <input id="musicSearchText" type="hidden" value="luxury business lounge relaxing instrumental jazz ambient background music">
+            <div id="musicPeriodLabel" style="font-size:12px;font-weight:900;color:#62f3e8;margin:5px 2px 2px">Automatic Music</div>
+            <div id="musicSearchStatus" class="yt-search-status">Automatic lounge music · selecting music for the current time of day…</div>
+            <div id="musicTextList" class="yt-text-list"></div>
+          </div>
+          <div class="music-url-row"><input id="youtubeUrl" placeholder="Paste YouTube URL or video ID" aria-label="YouTube URL"><button class="mini" id="loadMusicBtn">Load Video</button><button class="mini" id="openYoutubeBtn" type="button">Open on YouTube</button></div>
+          <div id="youtubeQuotaFallback" class="music-note" style="display:none;margin-top:8px;padding:10px;border:1px solid rgba(255,255,255,.14);border-radius:10px">
+            Automatic YouTube search is unavailable right now. Copy a YouTube video link, paste it above, then press <b>Load Video</b>.
+          </div>
+          <div class="music-player"><div id="youtubePlayer"></div></div>
+          <div class="music-controls"><button class="mini" id="musicPlayBtn">▶ Play Music</button><button class="mini" id="musicPauseBtn">⏸ Pause</button><button class="mini" id="musicNextBtn">⏭ Next</button></div>
+          <div class="statusrow"><span>YouTube</span><b id="youtubeStatus">Loading player…</b></div>
+          <div class="statusrow"><span>Music volume</span><b>15% (fixed)</b></div>
+          <div class="music-note">Music is chosen for the time of day (morning, afternoon, evening) and the next track plays automatically. Music pauses when an announcement starts and plays again when it finishes or is stopped. If you paused the music yourself, it stays paused.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px">
+          <div>
+            <h3 style="margin:0">✈️ Ready Announcements</h3>
+            <div class="ready-count" id="readyCount">0 / 8 preset</div>
+          </div>
+          <button class="mini" id="addReadyBtn">+ Preset Next Empty</button>
+        </div>
+        <div class="backup-row">
+          <button class="mini" id="exportBackupBtn" type="button" title="Download presets, history, destinations, airlines and settings">⬇ Export backup</button>
+          <button class="mini" id="importBackupBtn" type="button" title="Restore from a backup file">⬆ Import backup</button>
+          <input type="file" id="importBackupFile" accept="application/json,.json" hidden>
+        </div>
+        <div class="music-note" style="margin-bottom:9px">Presets are kept on this device and are re-prepared automatically after the page reloads. Use ✕ to clear a single preset. Export a backup to move presets to another console.</div>
+        <div class="ready-list" id="readyList"></div>
+      </div>
+
+      <div class="card">
+        <h3>📡 System Status</h3>
+        <div class="statusbox">
+          <div class="statusrow"><span>Speech engine</span><b id="ttsStatus">Checking…</b></div>
+          <div class="statusrow"><span>Selected voice</span><b id="voiceStatus">—</b></div>
+          <div class="statusrow"><span>Current mode</span><b id="modeStatus">Boarding</b></div>
+          <div class="statusrow"><span>Announcement</span><b id="speakStatus">Ready</b></div>
+          <div class="statusrow"><span>Voice loading</span><b id="voiceLoadPercent">0%</b></div>
+          <div class="meter"><i id="meterBar"></i></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h3 style="margin:0">🕘 Announcement History</h3>
+          <button class="mini" id="clearHistory">Clear</button>
+        </div>
+        <div class="history" id="history"></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="modal-backdrop" id="destinationModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="destinationModalTitle">
+      <div class="modal-head"><h3 id="destinationModalTitle">Add Destination</h3><button class="modal-close" type="button" data-close-modal="destinationModal" aria-label="Close">×</button></div>
+      <div class="modal-grid">
+        <div class="field"><label for="newDestination">City / Airport</label><input id="newDestination" placeholder="e.g. Kunming"></div>
+        <div class="field"><label for="newDestinationCode">IATA Code</label><input id="newDestinationCode" placeholder="e.g. KMG" maxlength="3"></div>
+      </div>
+      <div class="modal-actions"><button class="mini" type="button" data-close-modal="destinationModal">Cancel</button><button class="btn primary" type="button" id="addDestination">Save Destination</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="airlineModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="airlineModalTitle">
+      <div class="modal-head"><h3 id="airlineModalTitle">Add Airline</h3><button class="modal-close" type="button" data-close-modal="airlineModal" aria-label="Close">×</button></div>
+      <div class="modal-grid">
+        <div class="field"><label for="newAirlineCode">Airline Code</label><input id="newAirlineCode" placeholder="e.g. 8D" maxlength="3"></div>
+        <div class="field"><label for="newAirlineName">Airline Name</label><input id="newAirlineName" placeholder="e.g. FitsAir"></div>
+      </div>
+      <div class="modal-actions"><button class="mini" type="button" data-close-modal="airlineModal">Cancel</button><button class="btn primary" type="button" id="addAirline">Save Airline</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="presetPlayModal" aria-hidden="true">
+    <div class="modal-card preset-confirm-card" role="dialog" aria-modal="true" aria-labelledby="presetPlayModalTitle">
+      <div class="modal-head">
+        <h3 id="presetPlayModalTitle">Confirm Announcement</h3>
+        <button class="modal-close" type="button" id="presetPlayClose" aria-label="Close">×</button>
+      </div>
+      <div class="preset-confirm-summary">
+        <div class="preset-confirm-item"><span>Flight Number</span><b id="confirmFlight">—</b></div>
+        <div class="preset-confirm-item"><span>Destination</span><b id="confirmDestination">—</b></div>
+        <div class="preset-confirm-item"><span>Greeting (at play time)</span><b id="confirmSalutation">—</b></div>
+        <div class="preset-confirm-item"><span>Gate</span><b id="confirmGate">—</b></div>
+        <div class="preset-confirm-item" id="confirmGroupBox"><span>Group</span><b id="confirmGroup">—</b></div>
+        <div class="preset-confirm-item"><span>Call Type</span><b id="confirmCallType">—</b></div>
+        <div class="preset-confirm-item"><span>Language</span><b id="confirmLanguage">English</b></div>
+      </div>
+      <div class="preset-confirm-question">Do you want to play this announcement? <small style="font-weight:400;color:var(--muted)">(Enter = Play)</small></div>
+      <div class="modal-actions">
+        <button class="mini" type="button" id="presetPlayCancel">Cancel</button>
+        <button class="btn primary" type="button" id="presetPlayConfirm">▶ Play</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Koveli Announcement · Natural multilingual announcements · YouTube background music with automatic ducking</div>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+/* =========================================================================
+   CONFIG
+   ========================================================================= */
+// This key is visible to anyone who opens the page. In Google Cloud Console,
+// restrict it to your site's domain (HTTP referrer) and to the YouTube Data API only.
+const YOUTUBE_API_KEY="AIzaSyDm2L68LQPspPjoIZmw2Icg9vAA-JMwzy4";
+const TZ="Indian/Maldives"; // GMT+5 — used for the clock, greetings and music profile
+const READY_MAX=8;
+
+/* =========================================================================
+   SAFE STORAGE
+   ========================================================================= */
+function lsGet(k,d=null){try{const v=localStorage.getItem(k);return v===null?d:v;}catch{return d;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch{}}
+function lsDel(k){try{localStorage.removeItem(k);}catch{}}
+function lsJson(k,d){try{const v=JSON.parse(lsGet(k,"null"));return v??d;}catch{return d;}}
+
+/* =========================================================================
+   DIRECTORY DATA
+   ========================================================================= */
+let DESTINATIONS=[
+["Abu Dhabi","AUH"],["Almaty","ALA"],["Astana","NQZ"],["Bahrain","BAH"],["Bangalore","BLR"],
+["Beijing Daxing","PKX"],["Chengdu Tianfu","TFU"],["Chongqing","CKG"],["Cochin","COK"],["Colombo","CMB"],
+["Delhi","DEL"],["Dhaka","DAC"],["Doha","DOH"],["Dubai","DXB"],["Frankfurt","FRA"],["Hong Kong","HKG"],
+["Hyderabad","HYD"],["Istanbul","IST"],["Jeddah","JED"],["Kathmandu","KTM"],["Kuala Lumpur","KUL"],
+["Kuwait","KWI"],["London Heathrow","LHR"],["Milan Malpensa","MXP"],["Moscow","SVO"],["Mumbai","BOM"],
+["Munich","MUC"],["Muscat","MCT"],["Paris","CDG"],["Riyadh","RUH"],["Rome","FCO"],["Shanghai","PVG"],
+["Sharjah","SHJ"],["Singapore","SIN"],["Tashkent","TAS"],["Trivandrum","TRV"],["Vienna","VIE"],
+["Melbourne","MEL"],["Warsaw","WAW"],["Zurich","ZRH"],["Kunming","KMG"],["Novosibirsk","OVB"]
+];
+const EXTRA_DESTINATIONS=[
+["Bangkok Suvarnabhumi","BKK"],["Bangkok Don Mueang","DMK"],["Guangzhou","CAN"],["Chengdu Shuangliu","CTU"],["Shenzhen","SZX"],["Wuhan","WUH"],["Hangzhou","HGH"],["Nanjing","NKG"],["Xi'an","XIY"],["Beijing Capital","PEK"],["Shanghai Hongqiao","SHA"],["Qingdao","TAO"],["Changsha","CSX"],["Fuzhou","FOC"],["Xiamen","XMN"],["Hanoi","HAN"],["Ho Chi Minh City","SGN"],["Jakarta","CGK"],["Bali Denpasar","DPS"],["Phuket","HKT"],["Chennai","MAA"],["Kolkata","CCU"],["Ahmedabad","AMD"],["Pune","PNQ"],["Goa","GOI"],["Tiruchirappalli","TRZ"],["Madurai","IXM"],["Kannur","CNN"],["Kozhikode","CCJ"],["Karachi","KHI"],["Lahore","LHE"],["Islamabad","ISB"],["Dammam","DMM"],["Medina","MED"],["Salalah","SLL"],["Seychelles","SEZ"],["Mauritius","MRU"],["Addis Ababa","ADD"],["Nairobi","NBO"],["Johannesburg","JNB"],["Cairo","CAI"],["Amman","AMM"],["Baku","GYD"],["Tbilisi","TBS"],["Yerevan","EVN"],["Samarkand","SKD"],["Moscow Domodedovo","DME"],["Moscow Vnukovo","VKO"],["Saint Petersburg","LED"],["Yekaterinburg","SVX"],["Kazan","KZN"],["Istanbul Sabiha Gokcen","SAW"],["London Gatwick","LGW"],["Manchester","MAN"],["Birmingham","BHX"],["Milan Bergamo","BGY"],["Berlin","BER"],["Dusseldorf","DUS"],["Amsterdam","AMS"],["Brussels","BRU"],["Copenhagen","CPH"],["Stockholm","ARN"],["Oslo","OSL"],["Helsinki","HEL"],["Prague","PRG"],["Budapest","BUD"],["Athens","ATH"],["Madrid","MAD"],["Barcelona","BCN"],["Lisbon","LIS"],["New York JFK","JFK"],["Toronto","YYZ"],["Sydney","SYD"],["Perth","PER"],["Brisbane","BNE"],["Adelaide","ADL"]
+];
+for(const d of EXTRA_DESTINATIONS)if(!DESTINATIONS.some(x=>x[1]===d[1]))DESTINATIONS.push(d);
+
+let AIRLINES={
+"EK":"Emirates","QR":"Qatar Airways","EY":"Etihad Airways","FZ":"flydubai","G9":"Air Arabia","WY":"Oman Air",
+"GF":"Gulf Air","SV":"Saudia","KU":"Kuwait Airways","SQ":"Singapore Airlines","MH":"Malaysia Airlines",
+"AK":"AirAsia","TG":"Thai Airways","UL":"SriLankan Airlines","AI":"Air India","6E":"IndiGo","IX":"Air India Express",
+"BA":"British Airways","LH":"Lufthansa","AF":"Air France","KL":"KLM","LX":"SWISS","OS":"Austrian Airlines",
+"TK":"Turkish Airlines","QF":"Qantas","NZ":"Air New Zealand","CX":"Cathay Pacific","JL":"Japan Airlines",
+"NH":"ANA","ET":"Ethiopian Airlines","KQ":"Kenya Airways","Q2":"Maldivian","LO":"LOT Polish Airlines",
+"SU":"Aeroflot","KC":"Air Astana","HX":"Hong Kong Airlines","CZ":"China Southern","MU":"China Eastern",
+"CA":"Air China","NO":"Neos","DE":"Condor","WK":"Edelweiss","VS":"Virgin Atlantic","OD":"Batik Air Malaysia",
+"8D":"FitsAir","D8":"Norwegian Air Sweden","D7":"AirAsia X","D3":"Daallo Airlines","FD":"Thai AirAsia","XJ":"Thai AirAsia X",
+"5J":"Cebu Pacific","PR":"Philippine Airlines","Z2":"Philippines AirAsia","ID":"Batik Air","JT":"Lion Air","QZ":"Indonesia AirAsia",
+"TR":"Scoot","JQ":"Jetstar","VJ":"VietJet Air","VN":"Vietnam Airlines","U6":"Ural Airlines","S7":"S7 Airlines","DP":"Pobeda",
+"ZF":"Azur Air","N4":"Nordwind Airlines","EO":"Ikar Airlines","U2":"easyJet","W6":"Wizz Air","FR":"Ryanair","VY":"Vueling",
+"IB":"Iberia","TP":"TAP Air Portugal","AY":"Finnair","SK":"SAS","DY":"Norwegian","BT":"airBaltic","A3":"Aegean Airlines",
+"JU":"Air Serbia","RO":"TAROM","MS":"Egyptair","RJ":"Royal Jordanian","ME":"Middle East Airlines","PK":"Pakistan International Airlines",
+"BG":"Biman Bangladesh Airlines","BS":"US-Bangla Airlines","H9":"Himalaya Airlines","RA":"Nepal Airlines","UK":"Vistara","SG":"SpiceJet",
+"I5":"AirAsia India","QP":"Akasa Air","G8":"Go First","XY":"flynas","F3":"flyadeal","J9":"Jazeera Airways","OV":"SalamAir",
+"3L":"Air Arabia Abu Dhabi","3U":"Sichuan Airlines","MF":"Xiamen Airlines","HU":"Hainan Airlines","ZH":"Shenzhen Airlines",
+"3K":"Jetstar Asia","MK":"Air Mauritius","HM":"Air Seychelles","UU":"Air Austral","8Q":"Onur Air","6H":"Israir","LY":"El Al",
+"B2":"Belavia","J2":"Azerbaijan Airlines","HY":"Uzbekistan Airways","DV":"SCAT Airlines","IQ":"Qazaq Air","B9":"Iran Air Tours",
+"W5":"Mahan Air","IR":"Iran Air","Q6":"Volaris Costa Rica","OQ":"Chongqing Airlines","PG":"Bangkok Airways","4Y":"Discover Airlines",
+"AZ":"ITA Airways","JD":"Beijing Capital Airlines"
+};
+
+// Local directory additions survive updates and browser restarts.
+const DIRECTORY_KEY="koveli_announcement_directory_v2";
+function mergeDirectory(saved){
+ if(!saved||typeof saved!=="object")return;
+ if(Array.isArray(saved.destinations))for(const d of saved.destinations){if(Array.isArray(d)&&d[0]&&!DESTINATIONS.some(x=>x[0].toLowerCase()===String(d[0]).toLowerCase()))DESTINATIONS.push([String(d[0]),String(d[1]||"")]);}
+ if(saved.airlines&&typeof saved.airlines==="object")for(const [k,v] of Object.entries(saved.airlines))if(/^[A-Z0-9]{2,3}$/.test(k)&&v)AIRLINES[k]=String(v);
+}
+mergeDirectory(lsJson(DIRECTORY_KEY,{}));
+function saveDirectory(){lsSet(DIRECTORY_KEY,JSON.stringify({destinations:DESTINATIONS,airlines:AIRLINES}));}
+
+/* =========================================================================
+   GLOBAL STATE & HELPERS
+   ========================================================================= */
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+let activeTab="boarding", voices=[], currentUtterance=null, audioCtx=null, historyData=[];
+let ytPlayer=null, ytReady=false, pendingVideoId=null, ytCreateTimer=null;
+let speechPlaybackMode=lsGet("koveli_speech_mode","live");
+let bilingualMode=lsGet("koveli_bilingual","off");
+const SPEECH_RATE=.92;            // fixed speaking speed (Arabic is spoken slightly faster)
+let announceVolume=Math.min(100,Math.max(10,+lsGet("koveli_announce_volume","100")||100));
+let readyAnnouncements=[];
+let isAnnouncing=false;            // true while chime/speech for a real announcement is in progress
+let activePlayingPresetId=null;
+let speechRunToken=0;
+const readyPrepared=new Map();     // preset id -> {voiceKey, language}
+const readyLoading=new Set();
+const readyButtonProgress=new Map();
+
+function localHour(){
+ try{
+  const h=+new Intl.DateTimeFormat("en-GB",{timeZone:TZ,hour:"2-digit",hourCycle:"h23"}).format(new Date());
+  return Number.isFinite(h)?h%24:new Date().getHours();
+ }catch{return new Date().getHours();}
+}
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function isOn(id){return $(id)?.classList.contains("on")}
+function syncChipAria(){document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c.classList.contains("on")?"true":"false"));}
+function toggleChip(el){el.classList.toggle("on");updatePreview()}
+function joinList(a,and="and"){return a.length<=1?(a[0]||""):a.slice(0,-1).join(", ")+` ${and} `+a[a.length-1];}
+function speechRate(lang){return lang==="ar"?.94:SPEECH_RATE;}
+
+// Flight numbers: 2-char IATA code (letters, letter+digit or digit+letter) or 3-letter ICAO code, then 1–4 digits.
+const FLIGHT_RE=/^([A-Z]{2,3}|[A-Z]\d|\d[A-Z])(\d{1,4}[A-Z]?)$/;
+function parseFlight(code){
+ const s=String(code||"").trim().toUpperCase().replace(/[\s\-./_]+/g,"");
+ const m=s.match(FLIGHT_RE);
+ return m?{raw:s,carrier:m[1],number:m[2]}:{raw:s,carrier:"",number:""};
+}
+function airline(code){
+ const p=parseFlight(code);
+ if(p.carrier&&AIRLINES[p.carrier])return AIRLINES[p.carrier];
+ const prefix=Object.keys(AIRLINES).sort((a,b)=>b.length-a.length).find(k=>p.raw.startsWith(k));
+ return prefix?AIRLINES[prefix]:"the operating airline";
+}
+function spellFlight(code){
+ const p=parseFlight(code);
+ if(!p.carrier)return p.raw.split("").join(" ");
+ return `${p.carrier.split("").join(" ")} ${p.number.split("").join(" ")}`;
+}
+function gateSpeech(g){
+ const m=String(g||"").match(/^([A-Z]+)(\d+)$/);
+ return m?`${m[1].split("").join(" ")} ${m[2].split("").join(" ")}`:g;
+}
+function timeSpeech(t){if(!t)return "";const [h,m]=t.split(":").map(Number);return `${String(h).padStart(2,"0")} ${String(m).padStart(2,"0")} hours`;}
+function greetingFor(choice){
+ if(choice==="morning")return "Good morning";
+ if(choice==="afternoon")return "Good afternoon";
+ if(choice==="evening")return "Good evening";
+ if(choice==="attention")return "Attention please";
+ const h=localHour();
+ return h<12?"Good morning":h<18?"Good afternoon":"Good evening";
+}
+// Shows the detected airline under each flight-number field, or a warning.
+function updateFlightHint(inputId,hintId){
+ const el=$(hintId),raw=$(inputId)?.value.trim();
+ if(!el)return;
+ el.className="field-hint";
+ if(!raw){el.textContent="";return;}
+ const p=parseFlight(raw);
+ if(!p.carrier){el.textContent="⚠ Unusual format — expected e.g. EK659";el.classList.add("warn");return;}
+ if(AIRLINES[p.carrier]){el.textContent="✓ "+AIRLINES[p.carrier];el.classList.add("ok");return;}
+ el.textContent=`⚠ Airline "${p.carrier}" not in directory — add it with ＋ Airline`;el.classList.add("warn");
+}
+function updateFlightHints(){[["bFlight","bFlightHint"],["pFlight","pFlightHint"],["dFlight","dFlightHint"],["gFlight","gFlightHint"],["cFlight","cFlightHint"]].forEach(([a,b])=>updateFlightHint(a,b));}
+
+/* =========================================================================
+   BOARDING FORM
+   ========================================================================= */
+function selectedGroups(){return Array.from(document.querySelectorAll('#boardingGroups .chip.on')).map(x=>x.dataset.group);}
+function groupLabelFrom(a){return a&&a.length?a.join(" + "):"All passengers";}
+function groupSpeechFrom(a){
+ if(!a||!a.length||a.includes("All passengers"))return "all remaining guests";
+ return "guests in "+joinList(a);
+}
+function readBoardingForm(){
+ const dest2Visible=$("bDest2Field")?.style.display!=="none";
+ return {
+  flight:$("bFlight").value, dest:$("bDest").value, dest2:dest2Visible?($("bDest2").value||""):"",
+  gate:$("bGate").value, type:$("bType").value, greeting:$("bGreeting").value,
+  language:currentAnnouncementLanguage(), category:$("bCategory").value, style:$("bStyle").value,
+  groups:selectedGroups()
+ };
+}
+function destinationText(){const d=readBoardingForm();return [d.dest,d.dest2].filter(Boolean).join(" and ");}
+function setSecondDestinationVisible(show,value=""){
+ const field=$("bDest2Field"),sel=$("bDest2"),plus=$("showDest2");
+ if(!field||!sel)return;
+ field.style.display=show?"block":"none";
+ if(plus)plus.style.display=show?"none":"grid";
+ if(show){if(value)sel.value=value;if(!sel.value&&sel.options.length>1)sel.selectedIndex=1;}
+ else sel.value="";
+ updatePreview();
+}
+function renderGroups(){
+ const box=$("boardingGroups");box.innerHTML="";
+ for(const name of ["Group 0","Group 1","Group 2","Group 3","Group 4","Group 5","Group 6","All passengers"]){
+  const b=document.createElement("button");b.type="button";b.className="chip"+(name==="All passengers"?" on":"");b.dataset.group=name;b.textContent=name;
+  b.onclick=()=>{
+   if(name==="All passengers"){box.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x===b));}
+   else{
+    box.querySelector('[data-group="All passengers"]').classList.remove("on");b.classList.toggle("on");
+    if(!box.querySelector(".chip.on"))box.querySelector('[data-group="All passengers"]').classList.add("on");
+   }
+   updatePreview();
+  };
+  box.appendChild(b);
+ }
+}
+
+/* =========================================================================
+   MODALS & DIRECTORY
+   ========================================================================= */
+function openModal(id){const m=$(id);if(!m)return;m.classList.add("show");m.setAttribute("aria-hidden","false");setTimeout(()=>(m.querySelector("input")||m.querySelector(".btn.primary"))?.focus(),40);}
+function closeModal(id){const m=$(id);if(!m)return;m.classList.remove("show");m.setAttribute("aria-hidden","true");}
+function anyModalOpen(){return !!document.querySelector(".modal-backdrop.show");}
+function bindDirectoryModals(){
+ $("openDestinationModal")?.addEventListener("click",()=>openModal("destinationModal"));
+ $("openAirlineModal")?.addEventListener("click",()=>openModal("airlineModal"));
+ document.querySelectorAll("[data-close-modal]").forEach(b=>b.addEventListener("click",()=>closeModal(b.dataset.closeModal)));
+ ["destinationModal","airlineModal"].forEach(id=>{const m=$(id);m?.addEventListener("click",e=>{if(e.target===m)closeModal(id);});});
+ // Enter inside the modal fields saves.
+ ["newDestination","newDestinationCode"].forEach(id=>$(id)?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addDestination();}}));
+ ["newAirlineCode","newAirlineName"].forEach(id=>$(id)?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addAirline();}}));
+}
+function addDestination(){
+ const name=$("newDestination").value.trim(),code=$("newDestinationCode").value.trim().toUpperCase();
+ if(!name){notice("Enter a destination name.",false);return;}
+ if(code&&!/^[A-Z]{3}$/.test(code)){notice("IATA code must be 3 letters (or leave it empty).",false);return;}
+ if(!DESTINATIONS.some(x=>x[0].toLowerCase()===name.toLowerCase()))DESTINATIONS.push([name,code]);
+ saveDirectory();fillDestinations();$("bDest").value=name;$("newDestination").value="";$("newDestinationCode").value="";updatePreview();notice("Destination saved and selected.",true);closeModal("destinationModal");
+}
+function addAirline(){
+ const code=$("newAirlineCode").value.trim().toUpperCase(),name=$("newAirlineName").value.trim();
+ if(!/^[A-Z0-9]{2,3}$/.test(code)||!name){notice("Enter a valid airline code and name.",false);return;}
+ AIRLINES[code]=name;saveDirectory();$("newAirlineCode").value="";$("newAirlineName").value="";updatePreview();notice("Airline saved.",true);closeModal("airlineModal");
+}
+function fillDestinations(){
+ const first=$("bDest").value||"Colombo",second=$("bDest2").value;
+ const options=DESTINATIONS.slice().sort((a,b)=>a[0].localeCompare(b[0]));
+ for(const id of ["bDest","bDest2"]){const el=$(id);el.replaceChildren();if(id==="bDest2")el.add(new Option("No second destination",""));for(const [name,code] of options)el.add(new Option(name+(code?" — "+code:""),name));}
+ $("bDest").value=first;$("bDest2").value=second;
+ // Free-text destination fields on other tabs get the same list as suggestions.
+ const dl=$("destinationList");if(dl)dl.innerHTML=options.map(([n])=>`<option value="${escapeHtml(n)}">`).join("");
+}
+
+/* =========================================================================
+   LANGUAGES & LOCALISATION
+   ========================================================================= */
+const ANNOUNCEMENT_LANGUAGES={
+ en:{name:"English",locale:"en-GB",pref:[/sonia.*online/i,/sonia/i,/en-gb/i]},
+ ar:{name:"Arabic · Saudi Arabia",locale:"ar-SA",pref:[/zariyah/i,/hamed/i,/ar-sa/i,/saudi/i]},
+ "zh-HK":{name:"Hong Kong Cantonese",locale:"zh-HK",pref:[/hiugai|hiugaai|hiumaan|tracy/i,/zh-hk/i,/cantonese|hong kong/i]},
+ "zh-CN":{name:"Mandarin Chinese · Mainland",locale:"zh-CN",pref:[/xiaoxiao|huihui|yunxi|yunyang|yaoyao|kangkang/i,/zh-cn/i,/mandarin|china/i]},
+ "zh-SG":{name:"Mandarin Chinese · Singapore",locale:"zh-SG",pref:[/zh-sg/i,/singapore/i,/mandarin/i]},
+ ru:{name:"Russian",locale:"ru-RU",pref:[/svetlana|irina|milena|alena/i,/ru-ru/i]},
+ it:{name:"Italian",locale:"it-IT",pref:[/elsa|isabella/i,/it-it/i]},
+ ja:{name:"Japanese",locale:"ja-JP",pref:[/nanami|haruka|ayumi/i,/ja-jp/i]}
+};
+function currentAnnouncementLanguage(){return $("bLanguage")?.value||"en";}
+function languageLocale(lang){return (ANNOUNCEMENT_LANGUAGES[lang]||ANNOUNCEMENT_LANGUAGES.en).locale;}
+
+const DESTINATION_TRANSLATIONS={
+ ar:{
+  "Abu Dhabi":"أبوظبي","Almaty":"ألماتي","Astana":"أستانا","Bahrain":"البحرين","Bangalore":"بنغالور","Bengaluru":"بنغالور",
+  "Beijing Daxing":"بكين داشينغ","Beijing Capital":"بكين العاصمة","Chengdu Tianfu":"تشنغدو تيانفو","Chongqing":"تشونغتشينغ","Cochin":"كوتشي","Kochi":"كوتشي","Colombo":"كولومبو",
+  "Delhi":"دلهي","Dhaka":"دكا","Doha":"الدوحة","Dubai":"دبي","Frankfurt":"فرانكفورت","Hong Kong":"هونغ كونغ","Hyderabad":"حيدر آباد","Istanbul":"إسطنبول",
+  "Jeddah":"جدة","Kathmandu":"كاتماندو","Kuala Lumpur":"كوالالمبور","Kuwait":"الكويت","London Heathrow":"لندن هيثرو","London Gatwick":"لندن غاتويك",
+  "Milan Malpensa":"ميلانو مالبينسا","Moscow":"موسكو","Mumbai":"مومباي","Munich":"ميونخ","Muscat":"مسقط","Paris":"باريس","Riyadh":"الرياض","Rome":"روما",
+  "Shanghai":"شنغهاي","Sharjah":"الشارقة","Singapore":"سنغافورة","Tashkent":"طشقند","Trivandrum":"تريفاندروم","Thiruvananthapuram":"تيروفانانثابورام",
+  "Vienna":"فيينا","Melbourne":"ملبورن","Warsaw":"وارسو","Zurich":"زيورخ","Kunming":"كونمينغ","Bangkok Suvarnabhumi":"بانكوك سوفارنابومي",
+  "Guangzhou":"قوانغتشو","Shenzhen":"شنتشن","Chennai":"تشيناي","Kolkata":"كولكاتا","Karachi":"كراتشي","Lahore":"لاهور","Islamabad":"إسلام آباد",
+  "Dammam":"الدمام","Medina":"المدينة المنورة","Salalah":"صلالة","Seychelles":"سيشل","Mauritius":"موريشيوس","Addis Ababa":"أديس أبابا","Nairobi":"نيروبي",
+  "Johannesburg":"جوهانسبرغ","Cairo":"القاهرة","Amman":"عمّان","Baku":"باكو","Tbilisi":"تبليسي","Yerevan":"يريفان","Istanbul Sabiha Gokcen":"إسطنبول صبيحة كوكجن",
+  "Manchester":"مانشستر","Amsterdam":"أمستردام","Brussels":"بروكسل","Copenhagen":"كوبنهاغن","Stockholm":"ستوكهولم","Oslo":"أوسلو","Helsinki":"هلسنكي",
+  "Prague":"براغ","Budapest":"بودابست","Athens":"أثينا","Madrid":"مدريد","Barcelona":"برشلونة","Lisbon":"لشبونة","New York JFK":"نيويورك جون إف كينيدي",
+  "Toronto":"تورونتو","Sydney":"سيدني","Perth":"بيرث","Brisbane":"بريزبن","Adelaide":"أديلايد"
+ },
+ "zh-HK":{
+  "Abu Dhabi":"阿布扎比","Bahrain":"巴林","Bangalore":"班加羅爾","Bengaluru":"班加羅爾","Beijing Daxing":"北京大興","Beijing Capital":"北京首都",
+  "Chengdu Tianfu":"成都天府","Chongqing":"重慶","Cochin":"科欽","Kochi":"科欽","Colombo":"科倫坡","Delhi":"德里","Dhaka":"達卡","Doha":"多哈","Dubai":"杜拜",
+  "Frankfurt":"法蘭克福","Hong Kong":"香港","Hyderabad":"海得拉巴","Istanbul":"伊斯坦堡","Jeddah":"吉達","Kathmandu":"加德滿都","Kuala Lumpur":"吉隆坡",
+  "Kuwait":"科威特","London Heathrow":"倫敦希斯路","London Gatwick":"倫敦格域","Milan Malpensa":"米蘭馬爾彭薩","Moscow":"莫斯科","Mumbai":"孟買",
+  "Munich":"慕尼黑","Muscat":"馬斯喀特","Paris":"巴黎","Riyadh":"利雅得","Rome":"羅馬","Shanghai":"上海","Sharjah":"沙迦","Singapore":"新加坡",
+  "Tashkent":"塔什干","Trivandrum":"特里凡得琅","Vienna":"維也納","Melbourne":"墨爾本","Warsaw":"華沙","Zurich":"蘇黎世","Kunming":"昆明",
+  "Bangkok Suvarnabhumi":"曼谷素萬那普","Guangzhou":"廣州","Shenzhen":"深圳","Chennai":"清奈","Kolkata":"加爾各答","Karachi":"卡拉奇","Lahore":"拉合爾",
+  "Islamabad":"伊斯蘭堡","Dammam":"達曼","Medina":"麥地那","Salalah":"塞拉萊","Cairo":"開羅","Amman":"安曼","Manchester":"曼徹斯特","Amsterdam":"阿姆斯特丹",
+  "Sydney":"悉尼","Toronto":"多倫多","New York JFK":"紐約甘迺迪"
+ },
+ "zh-CN":{
+  "Abu Dhabi":"阿布扎比","Bahrain":"巴林","Bangalore":"班加罗尔","Bengaluru":"班加罗尔","Beijing Daxing":"北京大兴","Beijing Capital":"北京首都",
+  "Chengdu Tianfu":"成都天府","Chongqing":"重庆","Cochin":"科钦","Kochi":"科钦","Colombo":"科伦坡","Delhi":"德里","Dhaka":"达卡","Doha":"多哈","Dubai":"迪拜",
+  "Frankfurt":"法兰克福","Hong Kong":"香港","Hyderabad":"海得拉巴","Istanbul":"伊斯坦布尔","Jeddah":"吉达","Kathmandu":"加德满都","Kuala Lumpur":"吉隆坡",
+  "Kuwait":"科威特","London Heathrow":"伦敦希思罗","London Gatwick":"伦敦盖特威克","Milan Malpensa":"米兰马尔彭萨","Moscow":"莫斯科","Mumbai":"孟买",
+  "Munich":"慕尼黑","Muscat":"马斯喀特","Paris":"巴黎","Riyadh":"利雅得","Rome":"罗马","Shanghai":"上海","Sharjah":"沙迦","Singapore":"新加坡",
+  "Tashkent":"塔什干","Trivandrum":"特里凡得琅","Vienna":"维也纳","Melbourne":"墨尔本","Warsaw":"华沙","Zurich":"苏黎世","Kunming":"昆明",
+  "Bangkok Suvarnabhumi":"曼谷素万那普","Guangzhou":"广州","Shenzhen":"深圳","Chennai":"金奈","Kolkata":"加尔各答","Karachi":"卡拉奇","Lahore":"拉合尔",
+  "Islamabad":"伊斯兰堡","Dammam":"达曼","Medina":"麦地那","Salalah":"塞拉莱","Cairo":"开罗","Amman":"安曼","Manchester":"曼彻斯特","Amsterdam":"阿姆斯特丹",
+  "Sydney":"悉尼","Toronto":"多伦多","New York JFK":"纽约肯尼迪"
+ },
+ ru:{
+  "Abu Dhabi":"Абу-Даби","Bahrain":"Бахрейн","Bangalore":"Бангалор","Bengaluru":"Бангалор","Beijing Daxing":"Пекин Дасин","Colombo":"Коломбо",
+  "Delhi":"Дели","Dhaka":"Дакка","Doha":"Доха","Dubai":"Дубай","Frankfurt":"Франкфурт","Hong Kong":"Гонконг","Istanbul":"Стамбул","Jeddah":"Джидда",
+  "Kathmandu":"Катманду","Kuala Lumpur":"Куала-Лумпур","Kuwait":"Кувейт","London Heathrow":"Лондон Хитроу","Moscow":"Москву","Mumbai":"Мумбаи","Munich":"Мюнхен",
+  "Muscat":"Маскат","Paris":"Париж","Riyadh":"Эр-Рияд","Rome":"Рим","Shanghai":"Шанхай","Sharjah":"Шарджа","Singapore":"Сингапур","Tashkent":"Ташкент",
+  "Vienna":"Вену","Melbourne":"Мельбурн","Warsaw":"Варшаву","Zurich":"Цюрих","Kunming":"Куньмин","Bangkok Suvarnabhumi":"Бангкок Суварнабхуми",
+  "Guangzhou":"Гуанчжоу","Shenzhen":"Шэньчжэнь","Chennai":"Ченнаи","Karachi":"Карачи","Lahore":"Лахор","Islamabad":"Исламабад","Dammam":"Даммам",
+  "Medina":"Медину","Cairo":"Каир","Amman":"Амман","Amsterdam":"Амстердам","Sydney":"Сидней","Toronto":"Торонто"
+ },
+ it:{
+  "Abu Dhabi":"Abu Dhabi","Bahrain":"Bahrein","Beijing Daxing":"Pechino Daxing","Beijing Capital":"Pechino Capitale","Colombo":"Colombo","Delhi":"Delhi","Dhaka":"Dacca",
+  "Doha":"Doha","Dubai":"Dubai","Frankfurt":"Francoforte","Hong Kong":"Hong Kong","Istanbul":"Istanbul","Jeddah":"Gedda","Kathmandu":"Kathmandu","Kuala Lumpur":"Kuala Lumpur",
+  "Kuwait":"Kuwait City","London Heathrow":"Londra Heathrow","London Gatwick":"Londra Gatwick","Milan Malpensa":"Milano Malpensa","Moscow":"Mosca","Mumbai":"Mumbai",
+  "Munich":"Monaco di Baviera","Muscat":"Mascate","Paris":"Parigi","Riyadh":"Riad","Rome":"Roma","Shanghai":"Shanghai","Sharjah":"Sharjah","Singapore":"Singapore",
+  "Tashkent":"Tashkent","Vienna":"Vienna","Melbourne":"Melbourne","Warsaw":"Varsavia","Zurich":"Zurigo","Kunming":"Kunming","Cairo":"Il Cairo","Athens":"Atene",
+  "New York JFK":"New York JFK","Sydney":"Sydney"
+ },
+ ja:{
+  "Abu Dhabi":"アブダビ","Bahrain":"バーレーン","Bangalore":"バンガロール","Bengaluru":"ベンガルール","Beijing Daxing":"北京大興","Beijing Capital":"北京首都",
+  "Colombo":"コロンボ","Delhi":"デリー","Dhaka":"ダッカ","Doha":"ドーハ","Dubai":"ドバイ","Frankfurt":"フランクフルト","Hong Kong":"香港","Istanbul":"イスタンブール",
+  "Jeddah":"ジェッダ","Kathmandu":"カトマンズ","Kuala Lumpur":"クアラルンプール","Kuwait":"クウェート","London Heathrow":"ロンドン・ヒースロー","Moscow":"モスクワ",
+  "Mumbai":"ムンバイ","Munich":"ミュンヘン","Muscat":"マスカット","Paris":"パリ","Riyadh":"リヤド","Rome":"ローマ","Shanghai":"上海","Sharjah":"シャルジャ",
+  "Singapore":"シンガポール","Tashkent":"タシケント","Vienna":"ウィーン","Melbourne":"メルボルン","Warsaw":"ワルシャワ","Zurich":"チューリッヒ","Kunming":"昆明",
+  "Bangkok Suvarnabhumi":"バンコク・スワンナプーム","Guangzhou":"広州","Shenzhen":"深圳","Chennai":"チェンナイ","Karachi":"カラチ","Lahore":"ラホール",
+  "Islamabad":"イスラマバード","Dammam":"ダンマーム","Medina":"メディナ","Cairo":"カイロ","Sydney":"シドニー","Toronto":"トロント"
+ }
+};
+DESTINATION_TRANSLATIONS["zh-SG"]={...DESTINATION_TRANSLATIONS["zh-CN"]};
+
+function localizeDestinationName(name,lang=currentAnnouncementLanguage()){
+ const raw=String(name||"").trim();
+ if(!raw||lang==="en")return raw;
+ const dict=DESTINATION_TRANSLATIONS[lang]||{};
+ if(dict[raw])return dict[raw];
+ const key=Object.keys(dict).find(k=>k.toLowerCase()===raw.toLowerCase());
+ return key?dict[key]:raw;
+}
+function localizeDestinationText(text,lang=currentAnnouncementLanguage()){
+ const joiner={ar:" و ","zh-HK":"及","zh-CN":"和","zh-SG":"和",ru:" и ",it:" e ",ja:"、"}[lang]||" and ";
+ return String(text||"").split(/\s+and\s+/i).map(x=>localizeDestinationName(x.trim(),lang)).join(joiner);
+}
+const LOCATION_TRANSLATIONS={
+ "reception desk":{ar:"مكتب الاستقبال","zh-HK":"服務台","zh-CN":"服务台","zh-SG":"服务台",ru:"стойке информации",it:"il banco accoglienza",ja:"受付カウンター"},
+ "information desk":{ar:"مكتب الاستعلامات","zh-HK":"詢問處","zh-CN":"问询处","zh-SG":"问询处",ru:"справочной стойке",it:"il banco informazioni",ja:"インフォメーションカウンター"},
+ "airline service desk":{ar:"مكتب خدمة شركة الطيران","zh-HK":"航空公司服務櫃檯","zh-CN":"航空公司服务柜台","zh-SG":"航空公司服务柜台",ru:"стойку обслуживания авиакомпании",it:"il banco assistenza della compagnia aerea",ja:"航空会社サービスカウンター"},
+ "transfer desk":{ar:"مكتب الترانزيت","zh-HK":"轉機櫃檯","zh-CN":"中转柜台","zh-SG":"中转柜台",ru:"стойке трансфера",it:"il banco transiti",ja:"乗り継ぎカウンター"},
+ "boarding gate":{ar:"بوابة الصعود","zh-HK":"登機閘口","zh-CN":"登机口","zh-SG":"登机口",ru:"выходу на посадку",it:"il gate d'imbarco",ja:"搭乗口"}
+};
+function localizeLocation(loc,lang){
+ const k=String(loc||"").trim().toLowerCase().replace(/^the\s+/,"");
+ return LOCATION_TRANSLATIONS[k]?.[lang]||loc;
+}
+const AR_AIRLINES={
+ SV:"الخطوط السعودية",EK:"طيران الإمارات",QR:"الخطوط الجوية القطرية",EY:"الاتحاد للطيران",FZ:"فلاي دبي",G9:"العربية للطيران",
+ WY:"الطيران العُماني",GF:"طيران الخليج",KU:"الخطوط الجوية الكويتية",UL:"الخطوط الجوية السريلانكية",Q2:"الخطوط الجوية المالديفية",
+ TK:"الخطوط الجوية التركية",BA:"الخطوط الجوية البريطانية",LH:"لوفتهانزا",AF:"الخطوط الجوية الفرنسية",SQ:"الخطوط الجوية السنغافورية",
+ MH:"الخطوط الجوية الماليزية",TG:"الخطوط الجوية التايلاندية",AI:"طيران الهند",IX:"طيران الهند إكسبريس","6E":"إنديغو",
+ SU:"إيروفلوت",KC:"طيران أستانا",CX:"كاثي باسيفيك",CZ:"تشاينا ساذرن",MU:"تشاينا إيسترن",CA:"إير تشاينا",
+ XY:"طيران ناس",F3:"طيران أديل",J9:"طيران الجزيرة",OV:"طيران السلام"
+};
+function localizeAirlineName(f,lang=currentAnnouncementLanguage()){
+ const p=parseFlight(f);
+ const english=airline(f);
+ if(lang!=="ar")return english;
+ return AR_AIRLINES[p.carrier]||english;
+}
+function localizeGroups(groups,lang){
+ const a=Array.isArray(groups)?groups:[];
+ const all=!a.length||a.includes("All passengers");
+ const nums=a.filter(g=>g!=="All passengers").map(g=>g.replace(/\D/g,""));
+ switch(lang){
+  case "ar":return all?"جميع الركاب":`ركاب المجموعة ${nums.join(" و ")}`;
+  case "zh-HK":return all?"所有旅客":`第${nums.join("、")}組旅客`;
+  case "zh-CN":case "zh-SG":return all?"所有旅客":`第${nums.join("、")}组旅客`;
+  case "ru":return all?"Всех пассажиров":`Пассажиров ${nums.length>1?"групп":"группы"} ${joinList(nums,"и")}`;
+  case "it":return all?"Tutti i passeggeri":`I passeggeri ${nums.length>1?"dei gruppi":"del gruppo"} ${joinList(nums,"e")}`;
+  case "ja":return all?"全てのお客様":`グループ${nums.join("・")}のお客様`;
+  default:return groupLabelFrom(a);
+ }
+}
+
+/* Arabic / Russian identifier speech: every digit is spoken separately. */
+const AR_TTS_DIGITS={0:"صفر",1:"واحد",2:"اثنان",3:"ثلاثة",4:"أربعة",5:"خمسة",6:"ستة",7:"سبعة",8:"ثمانية",9:"تسعة"};
+const RU_TTS_DIGITS={0:"ноль",1:"один",2:"два",3:"три",4:"четыре",5:"пять",6:"шесть",7:"семь",8:"восемь",9:"девять"};
+function identifierSpeech(value,digitWords){
+ const raw=String(value||"").trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
+ return raw.split("").map(ch=>digitWords[ch]||ch).join(" ");
+}
+const arabicIdentifierSpeech=v=>identifierSpeech(v,AR_TTS_DIGITS);
+const russianIdentifierSpeech=v=>identifierSpeech(v,RU_TTS_DIGITS);
+const ID_IN_TEXT=/\b(?:[A-Z0-9]\s*)?(?:[A-Z]\s*){1,3}[- ]*\d(?:[\d\s-]*\d)?\b/g;
+
+function localizeFlightNumber(f,lang=currentAnnouncementLanguage()){
+ const p=parseFlight(f);
+ if(!p.carrier)return p.raw;
+ if(lang==="en")return p.raw;
+ if(lang==="ar")return `${p.carrier.split("").join(" ")} ${p.number}`;   // display: S V 837
+ if(lang==="ja")return `${p.carrier.split("").join("・")} ${p.number.split("").join("・")}`;
+ return `${p.carrier.split("").join(" ")} ${p.number.split("").join(" ")}`;
+}
+function localizeGate(g,lang){
+ const raw=String(g||"").trim().toUpperCase().replace(/\s+/g,"");
+ if(lang==="ar"){const m=raw.match(/^([A-Z]+)(\d+)$/);if(m)return `${m[1].split("").join(" ")} ${m[2]}`;}
+ return raw;
+}
+
+/* =========================================================================
+   ANNOUNCEMENT BUILDERS
+   Every builder takes an explicit language so the same announcement can be
+   produced in the selected language AND in English (bilingual mode).
+   ========================================================================= */
+function buildNativeBoarding(lang,type,f,d,g,cat,groups,airlineName=""){
+ if(lang==="ar"){
+  const flightRef=airlineName?`رحلة ${airlineName} رقم ${f}`:`الرحلة رقم ${f}`;
+  if(type==="final")return `نداء أخير. هذا هو النداء الأخير لجميع الركاب المتبقين على ${flightRef} المتجهة إلى ${d}. يرجى التوجه فوراً إلى بوابة الصعود رقم ${g}، حيث سيتم إغلاق البوابة قريباً. يرجى تجهيز بطاقات الصعود ووثائق السفر. شكراً لكم.`;
+  if(type==="closing")return `السيدات والسادة، يرجى الانتباه. بوابة الصعود رقم ${g} لـ ${flightRef} المتجهة إلى ${d} على وشك الإغلاق. يرجى من جميع الركاب المتبقين التوجه فوراً إلى البوابة. شكراً لتعاونكم.`;
+  if(cat==="assistance")return `السيدات والسادة، يرجى الانتباه. ندعو المسافرين على ${flightRef} المتجهة إلى ${d} الذين يحتاجون إلى مساعدة خاصة أو وقت إضافي للصعود إلى التوجه الآن إلى بوابة الصعود رقم ${g}. يسر موظفينا تقديم المساعدة لكم. شكراً لتعاونكم.`;
+  if(cat==="families")return `السيدات والسادة، يرجى الانتباه. ندعو العائلات المسافرة مع الأطفال الصغار على ${flightRef} المتجهة إلى ${d} إلى التوجه إلى بوابة الصعود رقم ${g}. يرجى تجهيز بطاقات الصعود ووثائق السفر. شكراً لتعاونكم ونتمنى لكم رحلة سعيدة.`;
+  if(cat==="premium")return `السيدات والسادة، يرجى الانتباه. ندعو الآن ركاب درجة رجال الأعمال والركاب المؤهلين للصعود بالأولوية على ${flightRef} المتجهة إلى ${d} للتوجه إلى بوابة الصعود رقم ${g}. سيبدأ الصعود العام بعد قليل. شكراً لكم.`;
+  if(type==="priority")return `السيدات والسادة، يرجى الانتباه. ندعو الآن ${groups||"ركاب الأولوية"} المسافرين على ${flightRef} المتجهة إلى ${d} للتوجه إلى بوابة الصعود رقم ${g}. يرجى تجهيز بطاقات الصعود ووثائق السفر. شكراً لحسن تعاونكم.`;
+  return `السيدات والسادة، يرجى الانتباه. نعلن الآن عن بداية الصعود إلى ${flightRef} المتجهة إلى ${d}. يرجى التوجه إلى بوابة الصعود رقم ${g}. يرجى تجهيز بطاقة الصعود ووثيقة السفر. شكراً لتعاونكم، ونتمنى لكم رحلة سعيدة.`;
+ }
+ if(lang==="zh-HK"){
+  if(type==="final")return `各位旅客請注意，最後登機廣播。乘搭 ${f} 航班前往 ${d} 而尚未登機嘅旅客，請立即前往 ${g} 號登機閘口。登機閘口即將關閉，請準備好登機證同旅遊證件。請確保隨身物品已全部帶齊。多謝合作。`;
+  if(type==="closing")return `各位旅客請注意。前往 ${d} 嘅 ${f} 航班，${g} 號登機閘口即將關閉。尚未登機嘅旅客請立即前往登機閘口。請確保隨身物品已全部帶齊。多謝合作。`;
+  if(cat==="assistance")return `各位旅客請注意。乘搭 ${f} 航班前往 ${d} 而需要特別協助或較多登機時間嘅旅客，請而家前往 ${g} 號登機閘口。我哋嘅職員會為你提供協助。請確保隨身物品已全部帶齊。多謝合作。`;
+  if(cat==="families")return `各位旅客請注意。乘搭 ${f} 航班前往 ${d}，攜同幼童同行嘅家庭旅客，而家請前往 ${g} 號登機閘口。請準備好登機證同旅遊證件。請確保隨身物品已全部帶齊。多謝合作，祝各位旅途愉快。`;
+  if(cat==="premium")return `各位旅客請注意。乘搭 ${f} 航班前往 ${d} 嘅商務艙同優先登機旅客，而家請前往 ${g} 號登機閘口登機。一般登機將會稍後開始。請確保隨身物品已全部帶齊。多謝合作。`;
+  if(type==="priority")return `各位旅客請注意。乘搭 ${f} 航班前往 ${d} 嘅${groups||"優先登機旅客"}，而家請前往 ${g} 號登機閘口。請準備好登機證同旅遊證件。請確保隨身物品已全部帶齊。多謝合作。`;
+  return `各位旅客請注意。前往 ${d} 嘅 ${f} 航班而家開始登機。請各位旅客前往 ${g} 號登機閘口。請準備好登機證同旅遊證件，以便辦理登機手續。請確保隨身物品已全部帶齊。多謝合作，祝各位旅途愉快。`;
+ }
+ if(lang==="zh-CN"||lang==="zh-SG"){
+  if(type==="final")return `各位旅客请注意，这是最后登机广播。乘坐 ${f} 航班前往 ${d} 且尚未登机的旅客，请立即前往 ${g} 号登机口。登机口即将关闭，请准备好登机牌和旅行证件。请确保随身物品已全部带齐。谢谢您的配合。`;
+  if(type==="closing")return `各位旅客请注意。前往 ${d} 的 ${f} 航班，${g} 号登机口即将关闭。尚未登机的旅客请立即前往登机口。请确保随身物品已全部带齐。谢谢您的配合。`;
+  if(cat==="assistance")return `各位旅客请注意。乘坐 ${f} 航班前往 ${d}，需要特别协助或更多登机时间的旅客，请现在前往 ${g} 号登机口。我们的工作人员将很乐意为您提供协助。请确保随身物品已全部带齐。谢谢您的配合。`;
+  if(cat==="families")return `各位旅客请注意。乘坐 ${f} 航班前往 ${d}，携带婴幼儿或儿童同行的家庭旅客，现在请前往 ${g} 号登机口。请准备好登机牌和旅行证件。请确保随身物品已全部带齐。谢谢您的配合，祝您旅途愉快。`;
+  if(cat==="premium")return `各位旅客请注意。乘坐 ${f} 航班前往 ${d} 的商务舱及符合优先登机资格的旅客，现在请前往 ${g} 号登机口。普通登机将稍后开始。请确保随身物品已全部带齐。谢谢。`;
+  if(type==="priority")return `各位旅客请注意。乘坐 ${f} 航班前往 ${d} 的${groups||"优先登机旅客"}，现在请前往 ${g} 号登机口。请准备好登机牌和旅行证件。请确保随身物品已全部带齐。谢谢您的配合。`;
+  return `各位旅客请注意，前往 ${d} 的 ${f} 航班现已开始登机。请各位旅客前往 ${g} 号登机口，并准备好登机牌和旅行证件。请确保随身物品已全部带齐。感谢您的配合，祝您旅途愉快。`;
+ }
+ if(lang==="ru"){
+  const belongings=`Пожалуйста, убедитесь, что вы не забыли свои личные вещи.`;
+  if(type==="final")return `Уважаемые дамы и господа, просим вашего внимания. Это последний вызов на посадку для пассажиров рейса ${f}, следующего в ${d}. Просим оставшихся пассажиров немедленно пройти к выходу на посадку ${g}. Посадка завершается. Пожалуйста, подготовьте посадочные талоны и проездные документы. ${belongings} Благодарим вас за сотрудничество.`;
+  if(type==="closing")return `Уважаемые дамы и господа, просим вашего внимания. Выход на посадку ${g} на рейс ${f}, следующий в ${d}, скоро закрывается. Всех оставшихся пассажиров просим немедленно пройти к выходу на посадку. ${belongings} Благодарим вас за сотрудничество.`;
+  if(cat==="assistance")return `Уважаемые дамы и господа, просим вашего внимания. Пассажиров рейса ${f}, следующего в ${d}, которым требуется специальная помощь или дополнительное время для посадки, просим пройти к выходу на посадку ${g}. Наши сотрудники будут рады вам помочь. ${belongings} Благодарим вас за сотрудничество.`;
+  if(cat==="families")return `Уважаемые дамы и господа, просим вашего внимания. Семьи с маленькими детьми, следующие рейсом ${f} в ${d}, приглашаются пройти к выходу на посадку ${g}. Пожалуйста, подготовьте посадочные талоны и проездные документы. ${belongings} Благодарим вас за сотрудничество и желаем приятного полёта.`;
+  if(cat==="premium")return `Уважаемые дамы и господа, просим вашего внимания. Пассажиров бизнес-класса и гостей с правом приоритетной посадки на рейс ${f} в ${d} приглашаем пройти к выходу на посадку ${g}. Общая посадка начнётся немного позже. ${belongings} Благодарим вас за сотрудничество.`;
+  if(type==="priority")return `Уважаемые дамы и господа, просим вашего внимания. ${groups||"Пассажиров с правом приоритетной посадки"} рейса ${f}, следующего в ${d}, приглашаем пройти к выходу на посадку ${g}. Пожалуйста, подготовьте посадочные талоны и проездные документы. ${belongings} Благодарим вас за сотрудничество.`;
+  return `Уважаемые дамы и господа, просим вашего внимания. Объявляется посадка на рейс ${f}, следующий в ${d}. Пассажиров просим пройти к выходу на посадку ${g}. Пожалуйста, подготовьте посадочные талоны и проездные документы. ${belongings} Благодарим вас за сотрудничество и желаем приятного полёта.`;
+ }
+ if(lang==="it"){
+  if(type==="final")return `Attenzione, prego. Questo è l'ultimo invito all'imbarco per i passeggeri del volo ${f} diretto a ${d}. Invitiamo tutti i passeggeri ancora mancanti a recarsi immediatamente al gate ${g}. L'imbarco sta per terminare. Grazie.`;
+  if(type==="closing")return `Signore e signori, vi preghiamo di prestare attenzione. Il gate ${g} per il volo ${f} diretto a ${d} sta per chiudere. Invitiamo gli ultimi passeggeri a recarsi immediatamente al gate. Grazie per la collaborazione.`;
+  if(cat==="assistance")return `Signore e signori, vi preghiamo di prestare attenzione. I passeggeri del volo ${f} diretto a ${d} che necessitano di assistenza speciale o di più tempo per l'imbarco sono gentilmente invitati a recarsi al gate ${g}. Il nostro personale sarà lieto di assistervi. Grazie.`;
+  if(cat==="families")return `Signore e signori, vi preghiamo di prestare attenzione. Le famiglie con bambini piccoli in viaggio sul volo ${f} diretto a ${d} sono ora invitate a recarsi al gate ${g}. Vi preghiamo di tenere pronti la carta d'imbarco e i documenti di viaggio. Grazie e buon viaggio.`;
+  if(cat==="premium")return `Signore e signori, vi preghiamo di prestare attenzione. Invitiamo i passeggeri di Business Class e gli ospiti con imbarco prioritario del volo ${f} diretto a ${d} a recarsi al gate ${g}. L'imbarco generale inizierà a breve. Grazie.`;
+  if(type==="priority")return `Signore e signori, vi preghiamo di prestare attenzione. ${groups||"I passeggeri con imbarco prioritario"} del volo ${f} diretto a ${d} sono invitati a recarsi al gate ${g}. Vi preghiamo di tenere pronti la carta d'imbarco e i documenti di viaggio. Grazie.`;
+  return `Signore e signori, vi preghiamo di prestare attenzione. È iniziato l'imbarco del volo ${f} diretto a ${d}. Invitiamo gentilmente i passeggeri a recarsi al gate ${g}. Vi preghiamo di tenere pronti la carta d'imbarco e i documenti di viaggio. Grazie per la collaborazione e vi auguriamo un piacevole viaggio.`;
+ }
+ if(lang==="ja"){
+  if(type==="final")return `お客様に最終搭乗のご案内を申し上げます。${d}行き、${f}便にご搭乗で、まだ搭乗されていないお客様は、${g}番搭乗口まで至急お越しください。まもなく搭乗手続きを終了いたします。搭乗券と渡航書類をご用意ください。ありがとうございます。`;
+  if(type==="closing")return `お客様にご案内申し上げます。${d}行き、${f}便の${g}番搭乗口はまもなく閉まります。まだ搭乗されていないお客様は、至急搭乗口までお越しください。ご協力ありがとうございます。`;
+  if(cat==="assistance")return `お客様にご案内申し上げます。${d}行き、${f}便をご利用で、お手伝いが必要なお客様、または搭乗にお時間が必要なお客様は、${g}番搭乗口までお越しください。係員がお手伝いいたします。ありがとうございます。`;
+  if(cat==="families")return `お客様にご案内申し上げます。${d}行き、${f}便をご利用の小さなお子様をお連れのお客様は、${g}番搭乗口までお越しください。搭乗券と渡航書類をご用意ください。ご協力ありがとうございます。`;
+  if(cat==="premium")return `お客様にご案内申し上げます。${d}行き、${f}便のビジネスクラスおよび優先搭乗のお客様は、${g}番搭乗口までお越しください。一般搭乗はまもなく開始いたします。ありがとうございます。`;
+  if(type==="priority")return `お客様にご案内申し上げます。${d}行き、${f}便の${groups||"優先搭乗のお客様"}は、${g}番搭乗口までお越しください。搭乗券と渡航書類をご用意ください。ご協力ありがとうございます。`;
+  return `お客様にご案内申し上げます。${d}行き、${f}便の搭乗を開始いたします。ご搭乗のお客様は、${g}番搭乗口までお越しください。搭乗券と渡航書類をご用意のうえ、お進みください。皆様のご協力に感謝申し上げます。どうぞ良いご旅行をお楽しみください。`;
+ }
+ return "";
+}
+
+function applyEnglishStyle(text,style){
+ if(style==="concise"){
+  return text
+   .replace(/,? and kindly ensure you have all your belongings with you\./g,".")
+   .replace(/\s*Kindly ensure you have all your belongings with you\./g,"")
+   .replace(/\s*Thank you for your cooperation, and we wish you a pleasant journey\./g," Thank you.")
+   .replace(/\s*Thank you, and we wish you a pleasant journey\./g," Thank you.")
+   .replace(/\s*Thank you for your cooperation\./g," Thank you.")
+   .replace(/\s{2,}/g," ").trim();
+ }
+ if(style==="warm"){
+  return text.replace(/\s*(Thank you[^.]*\.)$/," It is always a pleasure to have you with us. $1");
+ }
+ return text;
+}
+
+// Builds a boarding announcement from saved data (form or preset).
+function buildBoardingFromData(data){
+ const f=String(data.flight||"").trim().toUpperCase();
+ if(!f)return "Please enter a flight number.";
+ const lang=data.language||"en";
+ const dest=[data.dest,data.dest2].filter(Boolean).join(" and ")||data.destination||"";
+ const type=data.type||"boarding", cat=data.category||"general";
+ if(lang!=="en"){
+  return buildNativeBoarding(lang,type,localizeFlightNumber(f,lang),localizeDestinationText(dest,lang),
+   localizeGate(data.gate,lang),cat,localizeGroups(data.groups,lang),localizeAirlineName(f,lang));
+ }
+ const a=airline(f), fs=spellFlight(f), gs=gateSpeech(data.gate), bg=greetingFor(data.greeting), d=dest;
+ let t;
+ if(type==="final") t=`${bg}. This is the final boarding call for all remaining guests travelling on ${a} flight ${fs} to ${d}. Please proceed immediately to the boarding gate ${gs}. The gate will close shortly. Please have your boarding passes and travel documents ready. Kindly ensure you have all your belongings with you. Thank you for your cooperation, and we wish you a pleasant journey.`;
+ else if(type==="closing") t=`${bg}. The boarding gate ${gs} for ${a} flight ${fs} to ${d} is now closing. All remaining guests are requested to proceed to the boarding gate immediately. We kindly ask all guests to have their boarding passes and travel documents ready. Kindly ensure you have all your belongings with you. Thank you for your cooperation.`;
+ else if(cat==="assistance") t=`${bg}. We are now inviting our guests travelling on ${a} flight ${fs} to ${d} who require special assistance or additional boarding time to proceed to the boarding gate ${gs}. Our team will be pleased to assist you. We kindly ask all guests to have their boarding passes and travel documents ready. Kindly ensure you have all your belongings with you. Thank you for your cooperation, and we wish you a pleasant journey.`;
+ else if(cat==="families") t=`${bg}. We are now inviting our guests travelling with infants and young children on ${a} flight ${fs} to ${d} to proceed to the boarding gate ${gs}. We kindly ask all guests to have their boarding passes and travel documents ready. Kindly ensure you have all your belongings with you. Thank you for your cooperation, and we wish you a pleasant journey.`;
+ else if(cat==="premium") t=`${bg}. We are now inviting our Business Class and eligible priority guests travelling on ${a} flight ${fs} to ${d} to proceed to the boarding gate ${gs}. We kindly ask all guests to have their boarding passes and travel documents ready. General boarding will follow shortly. Kindly ensure you have all your belongings with you. Thank you for your cooperation, and we wish you a pleasant journey.`;
+ else if(type==="priority") t=`${bg}. We are now inviting ${groupSpeechFrom(data.groups)} travelling on ${a} flight ${fs} to ${d} to proceed to the boarding gate ${gs}. We kindly ask all guests to have their boarding passes and travel documents ready. Guests in other groups are kindly requested to remain seated until their group is called. Kindly ensure you have all your belongings with you. Thank you for your cooperation.`;
+ else t=`${bg}. We are now inviting our guests travelling on ${a} flight ${fs} to ${d}. Boarding has now commenced at gate ${gs}. Please have your boarding passes and travel documents ready, and kindly ensure you have all your belongings with you. Thank you, and we wish you a pleasant journey.`;
+ return applyEnglishStyle(t,data.style);
+}
+function buildBoarding(lang=currentAnnouncementLanguage()){return buildBoardingFromData({...readBoardingForm(),language:lang});}
+
+function nativeTitle(lang,t){
+ const x=String(t||"").trim();
+ const map={
+  ar:{"Mr.":"السيد","Mrs.":"السيدة","Ms.":"السيدة","Dr.":"الدكتور","Prof.":"البروفيسور"},
+  zh:{"Mr.":"先生","Mrs.":"女士","Ms.":"女士","Dr.":"博士","Prof.":"教授"},
+  ru:{"Mr.":"господина","Mrs.":"госпожу","Ms.":"госпожу","Dr.":"доктора","Prof.":"профессора"},
+  it:{"Mr.":"Signor","Mrs.":"Signora","Ms.":"Signora","Dr.":"Dottor","Prof.":"Professor"},
+  ja:{"Mr.":"様","Mrs.":"様","Ms.":"様","Dr.":"様","Prof.":"様"}
+ };
+ const k=lang.startsWith("zh")?"zh":lang;
+ return map[k]?.[x]||x;
+}
+function buildNativePaging(lang,n,t,f,loc,repeat,urgent){
+ const title=nativeTitle(lang,t), fl=f?localizeFlightNumber(f,lang):"", an=f?localizeAirlineName(f,lang):"", place=localizeLocation(loc,lang);
+ if(lang==="ar") return `يرجى الانتباه. نداء إلى ${title} ${n}${f?`، المسافر على رحلة ${an} رقم ${fl}`:""}.${repeat?` أكرر، ${title} ${n}.`:""} يرجى التوجه إلى ${place}.${urgent?" يرجى التوجه فوراً.":""} شكراً لكم.`;
+ if(lang==="zh-HK") return `請注意。現正尋找${n}${title}${f?`，乘搭${an}航班 ${fl}`:""}。${repeat?`重複一次，${n}${title}。`:""}請前往${place}。${urgent?"請立即前往。":""}謝謝。`;
+ if(lang==="zh-CN"||lang==="zh-SG") return `请注意。现正寻找${n}${title}${f?`，乘坐${an}航班 ${fl}`:""}。${repeat?`重复一次，${n}${title}。`:""}请前往${place}。${urgent?"请立即前往。":""}谢谢。`;
+ if(lang==="ru") return `Внимание, пожалуйста. Просим ${title} ${n}${f?`, пассажира рейса ${an} ${fl},`:""} подойти к ${place}.${repeat?` Повторяем: ${title} ${n}.`:""}${urgent?" Просим подойти незамедлительно.":""} Спасибо.`;
+ if(lang==="it") return `Attenzione, prego. È richiesto il passeggero ${title} ${n}${f?`, in viaggio sul volo ${an} ${fl}`:""}.${repeat?` Ripetiamo, ${title} ${n}.`:""} È pregato di recarsi presso ${place}.${urgent?" È richiesta la sua presenza immediata.":""} Grazie.`;
+ if(lang==="ja") return `ご案内いたします。${n}${title}${f?`、${an} ${fl}便をご利用のお客様`:""}をお呼び出しいたします。${repeat?`繰り返します。${n}${title}。`:""}${place}までお越しください。${urgent?"至急お越しくださいますようお願いいたします。":""}ありがとうございます。`;
+ return "";
+}
+function nativeReason(lang,key){
+ const m={
+  ar:{inbound:"تأخر وصول الطائرة القادمة",operational:"أسباب تشغيلية",weather:"سوء الأحوال الجوية",technical:"أسباب فنية",airtraffic:"قيود الحركة الجوية"},
+  "zh-HK":{inbound:"抵港航機延誤",operational:"運作原因",weather:"惡劣天氣",technical:"技術原因",airtraffic:"航空交通管制"},
+  "zh-CN":{inbound:"进港航班延误",operational:"运行原因",weather:"恶劣天气",technical:"技术原因",airtraffic:"空中交通管制"},
+  ru:{inbound:"позднего прибытия воздушного судна",operational:"операционных причин",weather:"неблагоприятных погодных условий",technical:"технических причин",airtraffic:"ограничений воздушного движения"},
+  it:{inbound:"del ritardo dell'aeromobile in arrivo",operational:"di motivi operativi",weather:"delle condizioni meteorologiche avverse",technical:"di motivi tecnici",airtraffic:"delle restrizioni del traffico aereo"},
+  ja:{inbound:"到着便の遅れ",operational:"運航上の理由",weather:"悪天候",technical:"機材上の理由",airtraffic:"航空交通上の制限"}
+ };
+ m["zh-SG"]=m["zh-CN"];
+ return m[lang]?.[key]||key;
+}
+function buildNativeDelay(lang,f,d,reason,time,includeTime,apology){
+ const a=localizeAirlineName(f,lang), fl=localizeFlightNumber(f,lang), why=nativeReason(lang,reason);
+ d=localizeDestinationText(d,lang);
+ if(lang==="ar") return `يرجى الانتباه. نأسف لإبلاغكم بأن رحلة ${a} رقم ${fl} إلى ${d} قد تأخرت بسبب ${why}.${includeTime&&time?` موعد المغادرة المعدل هو ${time} بالتوقيت المحلي.`:" سيتم الإعلان عن موعد المغادرة المعدل فور توفر معلومات إضافية."}${apology?" نعتذر بشدة عن الإزعاج ونشكركم على صبركم وتفهمكم.":" نعتذر عن الإزعاج ونشكركم على صبركم."}`;
+ if(lang==="zh-HK") return `請注意。我們很抱歉通知各位，${a}航班 ${fl} 前往${d}，因${why}而延誤。${includeTime&&time?`最新預計出發時間為當地時間 ${time}。`:"如有最新出發時間，我們會盡快公布。"}${apology?"對因此造成的不便，我們深表歉意，感謝各位耐心等候及體諒。":"對造成的不便，我們深表歉意，感謝各位耐心等候。"}`;
+ if(lang==="zh-CN"||lang==="zh-SG") return `请注意。我们很抱歉通知各位，${a}航班 ${fl} 前往${d}，因${why}而延误。${includeTime&&time?`最新预计出发时间为当地时间 ${time}。`:"如有最新出发时间，我们会尽快公布。"}${apology?"对于由此造成的不便，我们深表歉意，感谢您的耐心等候和理解。":"对于造成的不便，我们深表歉意，感谢您的耐心等候。"}`;
+ if(lang==="ru") return `Внимание, пожалуйста. С сожалением сообщаем, что рейс ${a} ${fl} в ${d} задерживается из-за ${why}.${includeTime&&time?` Новое время вылета — ${time} по местному времени.`:" Новое время вылета будет объявлено, как только появится дополнительная информация."}${apology?" Приносим искренние извинения за доставленные неудобства и благодарим за терпение и понимание.":" Приносим извинения за неудобства и благодарим за терпение."}`;
+ if(lang==="it") return `Attenzione, prego. Siamo spiacenti di informarvi che il volo ${a} ${fl} per ${d} è in ritardo a causa ${why}.${includeTime&&time?` Il nuovo orario di partenza è previsto alle ${time}, ora locale.`:" Il nuovo orario di partenza sarà comunicato non appena saranno disponibili ulteriori informazioni."}${apology?" Ci scusiamo sinceramente per il disagio e vi ringraziamo per la pazienza e la comprensione.":" Ci scusiamo per il disagio e vi ringraziamo per la pazienza."}`;
+ if(lang==="ja") return `ご案内いたします。${a} ${fl}便、${d}行きは、${why}のため出発が遅れております。${includeTime&&time?`変更後の出発予定時刻は現地時間 ${time} です。`:"新しい出発予定時刻は、情報が入り次第ご案内いたします。"}${apology?"お客様には大変ご迷惑をおかけいたしますことを深くお詫び申し上げます。ご理解とご協力をお願いいたします。":"ご迷惑をおかけいたしますことをお詫び申し上げます。"}`;
+ return "";
+}
+function buildNativeGateChange(lang,f,d,oldg,newg){
+ const a=localizeAirlineName(f,lang), fl=localizeFlightNumber(f,lang);
+ d=localizeDestinationText(d,lang); oldg=localizeGate(oldg,lang); newg=localizeGate(newg,lang);
+ if(lang==="ar")return `يرجى الانتباه. للمسافرين على رحلة ${a} رقم ${fl} إلى ${d}، يرجى ملاحظة تغيير بوابة الصعود. ستغادر الرحلة الآن من البوابة ${newg} بدلاً من البوابة ${oldg}. يرجى التوجه إلى البوابة ${newg}. نعتذر عن أي إزعاج. شكراً لكم.`;
+ if(lang==="zh-HK")return `請注意。乘搭${a}航班 ${fl} 前往${d}的旅客，請留意登機閘口已更改。航班現改由 ${newg} 號閘口出發，原定閘口為 ${oldg}。請前往 ${newg} 號閘口。對造成的不便，我們深表歉意。謝謝。`;
+ if(lang==="zh-CN"||lang==="zh-SG")return `请注意。乘坐${a}航班 ${fl} 前往${d}的旅客，请注意登机口已经更改。航班现改由 ${newg} 号登机口出发，原定登机口为 ${oldg}。请前往 ${newg} 号登机口。对于造成的不便，我们深表歉意。谢谢。`;
+ if(lang==="ru")return `Внимание, пожалуйста. Пассажирам рейса ${a} ${fl} в ${d}: изменён выход на посадку. Рейс будет отправляться от выхода ${newg} вместо выхода ${oldg}. Просим пройти к выходу ${newg}. Приносим извинения за неудобства. Спасибо.`;
+ if(lang==="it")return `Attenzione, prego. I passeggeri del volo ${a} ${fl} per ${d} sono pregati di notare un cambio del gate d'imbarco. Il volo partirà ora dal gate ${newg} anziché dal gate ${oldg}. Vi preghiamo di recarvi al gate ${newg}. Ci scusiamo per il disagio. Grazie.`;
+ if(lang==="ja")return `ご案内いたします。${a} ${fl}便、${d}行きをご利用のお客様に、搭乗ゲート変更のお知らせです。出発ゲートは ${oldg} から ${newg} に変更となりました。${newg} ゲートへお進みください。ご迷惑をおかけいたしますことをお詫び申し上げます。`;
+ return "";
+}
+function buildNativeCancel(lang,f,d,reasonKey,desk){
+ const a=localizeAirlineName(f,lang), fl=localizeFlightNumber(f,lang), why=nativeReason(lang,reasonKey), place=localizeLocation(desk,lang);
+ d=localizeDestinationText(d,lang);
+ if(lang==="ar")return `يرجى الانتباه. نأسف للإعلان عن إلغاء رحلة ${a} رقم ${fl} إلى ${d} بسبب ${why}. يرجى من المسافرين التوجه إلى ${place} للحصول على المساعدة ومعلومات إعادة الحجز. نعتذر بشدة عن الإزعاج ونشكركم على تفهمكم.`;
+ if(lang==="zh-HK")return `請注意。我們很抱歉宣布，${a}航班 ${fl} 前往${d}，因${why}而取消。請旅客前往${place}查詢協助及重新訂位安排。對造成的影響及不便，我們深表歉意，感謝各位體諒。`;
+ if(lang==="zh-CN"||lang==="zh-SG")return `请注意。我们很抱歉宣布，${a}航班 ${fl} 前往${d}，因${why}而取消。请旅客前往${place}咨询协助及重新预订安排。对于造成的影响和不便，我们深表歉意，感谢您的理解。`;
+ if(lang==="ru")return `Внимание, пожалуйста. С сожалением сообщаем, что рейс ${a} ${fl} в ${d} отменён из-за ${why}. Пассажиров просим обратиться к ${place} для получения помощи и информации о перебронировании. Приносим искренние извинения за неудобства и благодарим за понимание.`;
+ if(lang==="it")return `Attenzione, prego. Siamo spiacenti di annunciare che il volo ${a} ${fl} per ${d} è stato cancellato a causa ${why}. I passeggeri sono pregati di rivolgersi presso ${place} per assistenza e informazioni sulla riprenotazione. Ci scusiamo sinceramente per il disagio e vi ringraziamo per la comprensione.`;
+ if(lang==="ja")return `ご案内いたします。${a} ${fl}便、${d}行きは、${why}のため欠航となりました。お客様は${place}にて、今後のお手続きおよび予約変更についてお問い合わせください。ご迷惑をおかけいたしますことを深くお詫び申し上げます。`;
+ return "";
+}
+
+function buildPaging(lang=currentAnnouncementLanguage()){
+ const n=$("pName").value.trim(), t=$("pTitle").value, f=$("pFlight").value.trim().toUpperCase(), loc=$("pLocation").value.trim()||"reception desk";
+ if(!n)return "Please enter the passenger name.";
+ const repeat=isOn("pRepeat"), urgent=isOn("pUrgent");
+ if(lang!=="en")return buildNativePaging(lang,n,t,f,loc,repeat,urgent);
+ const place=/^the\s/i.test(loc)?loc:`the ${loc}`;
+ return `Attention please. Paging ${t} ${n}${f?`, travelling on ${airline(f)} flight ${spellFlight(f)}`:""}.${repeat?` I repeat, ${t} ${n}.`:""} Kindly proceed to ${place}.${urgent?" Your immediate attention is required.":""} Thank you.`;
+}
+const EN_REASONS={inbound:"the late arrival of the inbound aircraft",operational:"operational reasons",weather:"adverse weather conditions",technical:"technical reasons",airtraffic:"air traffic restrictions"};
+function buildDelay(lang=currentAnnouncementLanguage()){
+ const f=$("dFlight").value.trim().toUpperCase(), d=$("dDest").value.trim()||"destination", reason=$("dReason").value;
+ if(!f)return "Please enter the flight number.";
+ const tm=$("dTime").value, includeTime=isOn("dIncludeTime")&&!!tm;
+ if(lang!=="en")return buildNativeDelay(lang,f,d,reason,tm,includeTime,isOn("dApology"));
+ let msg=`Attention please. We regret to inform you that ${airline(f)} flight ${spellFlight(f)} to ${d} has been delayed due to ${EN_REASONS[reason]}.`;
+ msg+=includeTime?` The revised departure time is ${timeSpeech(tm)} local time.`:" A revised departure time will be announced as soon as further information becomes available.";
+ msg+=isOn("dApology")?" We sincerely apologise for the inconvenience caused and greatly appreciate your patience and understanding.":" We apologise for the inconvenience and thank you for your patience.";
+ return msg;
+}
+function buildGateChange(lang=currentAnnouncementLanguage()){
+ const f=$("gFlight").value.trim().toUpperCase(), d=$("gDest").value.trim()||"destination", oldg=$("gOld").value,newg=$("gNew").value;
+ if(!f)return "Please enter the flight number.";
+ if(oldg===newg)return "Please choose a new gate that is different from the previous gate.";
+ if(lang!=="en")return buildNativeGateChange(lang,f,d,oldg,newg);
+ return `Attention please. Passengers travelling on ${airline(f)} flight ${spellFlight(f)} to ${d}, please note a change of boarding gate. The flight will now depart from gate ${gateSpeech(newg)}, instead of gate ${gateSpeech(oldg)}. Please proceed to gate ${gateSpeech(newg)}. We apologise for any inconvenience. Thank you.`;
+}
+function buildCancel(lang=currentAnnouncementLanguage()){
+ const f=$("cFlight").value.trim().toUpperCase(), d=$("cDest").value.trim()||"destination", r=$("cReason").value, desk=$("cDesk").value.trim()||"airline service desk";
+ if(!f)return "Please enter the flight number.";
+ if(lang!=="en")return buildNativeCancel(lang,f,d,r,desk);
+ const place=/^the\s/i.test(desk)?desk:`the ${desk}`;
+ return `Attention please. We regret to announce that ${airline(f)} flight ${spellFlight(f)} to ${d} has been cancelled due to ${EN_REASONS[r]||r}. Passengers are kindly requested to contact ${place} for further assistance and rebooking information. We sincerely apologise for the disruption and inconvenience caused. Thank you for your understanding.`;
+}
+const INVALID_RE=/^Please (enter|choose)/;
+function getText(lang=currentAnnouncementLanguage()){
+ if(activeTab==="boarding")return buildBoarding(lang);
+ if(activeTab==="paging")return buildPaging(lang);
+ if(activeTab==="delay")return buildDelay(lang);
+ if(activeTab==="gatechange")return buildGateChange(lang);
+ if(activeTab==="cancel")return buildCancel(lang);
+ return $("customText").value.trim();
+}
+// English version of the current announcement, used by bilingual mode ("" when not applicable).
+function englishCounterpart(lang=currentAnnouncementLanguage()){
+ if(lang==="en"||activeTab==="custom")return "";
+ const t=getText("en");
+ return !t||INVALID_RE.test(t)?"":t;
+}
+// Everything needed to play / save / preset the announcement currently on screen.
+function currentEntry(){
+ const lang=currentAnnouncementLanguage();
+ return {text:getText(lang),lang,mode:activeTab,boardingData:activeTab==="boarding"?readBoardingForm():null,englishText:englishCounterpart(lang)};
+}
+function updatePreview(){
+ const map={boarding:"boardingPreview",paging:"pagingPreview",delay:"delayPreview",gatechange:"gatechangePreview",cancel:"cancelPreview",custom:"customPreview"};
+ updateFlightHints();
+ syncChipAria();
+ const el=$(map[activeTab]); if(!el)return;
+ const lang=currentAnnouncementLanguage();
+ const text=getText(lang);
+ el.textContent=text||"Enter announcement text.";
+ el.classList.toggle("invalid",!text||INVALID_RE.test(text));
+ const rtl=lang==="ar";
+ el.dir=rtl?"rtl":"ltr";
+ el.style.textAlign=rtl?"right":"left";
+ const en=$(map[activeTab]+"En");
+ if(en){
+  const enText=bilingualMode!=="off"?englishCounterpart(lang):"";
+  en.classList.toggle("show",!!enText);
+  en.innerHTML=enText?`<b>ENGLISH · ${bilingualMode==="before"?"PLAYED FIRST":"PLAYED AFTER"}</b>${escapeHtml(enText)}`:"";
+ }
+}
+function fillSelects(){
+ fillDestinations();
+ if(!$("bDest").value)$("bDest").value="Colombo";
+ const gates=[];for(let i=1;i<=12;i++)gates.push(`A${String(i).padStart(2,"0")}`);for(let i=1;i<=4;i++)gates.push(`B${String(i).padStart(2,"0")}`);
+ ["bGate","gOld","gNew"].forEach(id=>$(id).innerHTML=gates.map(g=>`<option>${g}</option>`).join(""));
+ $("bGate").value="A01";$("gOld").value="A03";$("gNew").value="A08";
+}
+
+/* =========================================================================
+   TTS TEXT PREPARATION
+   ========================================================================= */
+function improveArabicBoardingTtsPronunciation(text){
+ // Some Arabic voices misread "بدء" — "بِداية" keeps the same meaning and is read correctly.
+ return String(text||"")
+  .replace(/نعلن الآن عن (?:بدء|بداية) الصعود/g,"نُعْلِنُ الآن عن بِداية الصعود")
+  .replace(/نعلن الآن/g,"نُعْلِنُ الآن");
+}
+function finalArabicTtsText(text){
+ let t=String(text||"");
+ t=t.replace(/المسجلة\s+(?:في\s+)?إلى/g,"المتجهة إلى").replace(/بداية\s+صعود/g,"بداية الصعود");
+ t=t.replace(ID_IN_TEXT,m=>arabicIdentifierSpeech(m));   // SV837 -> S V ثمانية ثلاثة سبعة
+ return improveArabicBoardingTtsPronunciation(t).replace(/\s{2,}/g," ").trim();
+}
+function finalRussianTtsText(text){
+ return String(text||"").replace(ID_IN_TEXT,m=>russianIdentifierSpeech(m)).replace(/\s{2,}/g," ").trim();
+}
+function ttsText(text,lang){
+ if(lang==="ar")return finalArabicTtsText(text);
+ if(lang==="ru")return finalRussianTtsText(text);
+ return text;
+}
+function arabicBoardingSpeech(d){
+ const flight=parseFlight(d.flight).raw;
+ const dest=localizeDestinationText([d.dest,d.dest2].filter(Boolean).join(" and ")||d.destination||"","ar");
+ const t=buildNativeBoarding("ar",d.type,arabicIdentifierSpeech(flight),dest,arabicIdentifierSpeech(d.gate),d.category,localizeGroups(d.groups,"ar"),localizeAirlineName(flight,"ar"));
+ return finalArabicTtsText(t);
+}
+function announcementSpeech(text,lang,boardingData){
+ if(lang==="ar"&&boardingData)return arabicBoardingSpeech(boardingData);
+ return ttsText(text,lang);
+}
+
+/* =========================================================================
+   VOICES
+   ========================================================================= */
+let voicesReady=false, voiceLoadPromise=null, loadedVoiceLanguage=null;
+const warmedVoices=new Set();
+let selectedVoiceByLanguage=lsJson("koveli_voice_by_language",{});
+if(!selectedVoiceByLanguage||typeof selectedVoiceByLanguage!=="object")selectedVoiceByLanguage={};
+function voiceKey(v){return v?(v.voiceURI||`${v.name}|${v.lang}`):"system-default";}
+function rememberVoiceSelection(lang=loadedVoiceLanguage||currentAnnouncementLanguage()){
+ if(!lang)return;
+ const v=voices[+$("voiceSelect")?.value]||null;
+ selectedVoiceByLanguage[lang]=voiceKey(v);
+ lsSet("koveli_voice_by_language",JSON.stringify(selectedVoiceByLanguage));
+}
+function findSavedVoice(lang){
+ const key=selectedVoiceByLanguage[lang];
+ if(!key||key==="system-default")return null;
+ return (speechSynthesis.getVoices()||[]).find(v=>voiceKey(v)===key)||null;
+}
+function scoreVoice(v,lang){
+ const cfg=ANNOUNCEMENT_LANGUAGES[lang]||ANNOUNCEMENT_LANGUAGES.en;
+ const locale=(v.lang||"").toLowerCase();
+ let score=0;
+ if(locale===cfg.locale.toLowerCase())score+=500;
+ else if(locale.startsWith(cfg.locale.split("-")[0].toLowerCase()+"-"))score+=180;
+ cfg.pref.forEach((r,i)=>{if(r.test(v.name||"")||r.test(v.lang||""))score=Math.max(score,1000-i*40)});
+ if(/online|natural/i.test(v.name||""))score+=100;
+ if(v.default)score+=5;
+ return score;
+}
+function voicesForLang(all,lang){
+ const cfg=ANNOUNCEMENT_LANGUAGES[lang]||ANNOUNCEMENT_LANGUAGES.en;
+ const prefix=cfg.locale.split("-")[0].toLowerCase();
+ const nm=v=>v.name||"", vl=v=>(v.lang||"").toLowerCase().replace("_","-");
+ let list=all.filter(v=>{
+  if(lang==="zh-HK")return vl(v)==="zh-hk"||/cantonese|hong kong/i.test(nm(v));
+  if(lang==="zh-CN")return vl(v)==="zh-cn"||(/^zh-/.test(vl(v))&&!/cantonese|hong kong|singapore|taiwan/i.test(nm(v))&&vl(v)!=="zh-hk"&&vl(v)!=="zh-tw");
+  if(lang==="zh-SG")return vl(v)==="zh-sg"||(/^zh-/.test(vl(v))&&/singapore/i.test(nm(v)));
+  if(lang==="ar")return vl(v)==="ar-sa"||(/^ar-/.test(vl(v))&&/saudi|zariyah|hamed/i.test(nm(v)));
+  return vl(v)===cfg.locale.toLowerCase()||vl(v).startsWith(prefix+"-");
+ });
+ if(!list.length&&lang==="zh-SG")return voicesForLang(all,"zh-CN");
+ if(!list.length)list=all.filter(v=>vl(v).startsWith(prefix));
+ return list.sort((a,b)=>scoreVoice(b,lang)-scoreVoice(a,lang)).slice(0,14);
+}
+// Pick a voice for any language without touching the UI language selector.
+function pickVoiceFor(lang){
+ if(lang===loadedVoiceLanguage&&voices.length){const v=voices[+$("voiceSelect").value];if(v)return v;}
+ const saved=findSavedVoice(lang); if(saved)return saved;
+ return voicesForLang(speechSynthesis.getVoices()||[],lang)[0]||null;
+}
+function setVoiceProgress(percent,message){
+ const p=Math.max(0,Math.min(100,Math.round(percent||0)));
+ if($("voiceLoadPercent"))$("voiceLoadPercent").textContent=`${p}%`;
+ if($("meterBar"))$("meterBar").style.width=`${p}%`;
+ if(message&&$("speakStatus"))$("speakStatus").textContent=message;
+}
+async function waitForVoiceInventory(timeout=9000){
+ if(!("speechSynthesis" in window))return [];
+ const started=Date.now();let last="",stable=0,latest=[];
+ while(Date.now()-started<timeout){
+  latest=speechSynthesis.getVoices()||[];
+  const sig=latest.map(v=>voiceKey(v)).join("||");
+  if(latest.length&&sig===last)stable++;else stable=0;
+  last=sig;
+  if(latest.length&&stable>=4)break;
+  await sleep(150);
+ }
+ return latest;
+}
+async function loadVoices(force=false){
+ if(voiceLoadPromise&&!force)return voiceLoadPromise;
+ voiceLoadPromise=(async()=>{
+  if(!isAnnouncing)$("ttsStatus").textContent="Loading voices…";
+  let inventory=await waitForVoiceInventory();
+  if(!inventory.length){await sleep(350);inventory=speechSynthesis.getVoices()||[];}
+  const lang=currentAnnouncementLanguage();
+  voices=voicesForLang(inventory,lang);
+  if(!voices.length&&inventory.length)voices=inventory.slice(0,14);
+  $("voiceSelect").innerHTML=voices.length
+   ?voices.map((v,i)=>`<option value="${i}">${escapeHtml(v.name)} · ${escapeHtml(v.lang)}</option>`).join("")
+   :`<option value="">System default voice</option>`;
+  const savedKey=selectedVoiceByLanguage[lang];
+  const savedIndex=savedKey?voices.findIndex(v=>voiceKey(v)===savedKey):-1;
+  $("voiceSelect").value=voices.length?String(savedIndex>=0?savedIndex:0):"";
+  loadedVoiceLanguage=lang;
+  if(!selectedVoiceByLanguage[lang])rememberVoiceSelection(lang);
+  voicesReady=true;
+  $("ttsStatus").textContent=voices.length?`Ready · ${voices.length} voices`:"Ready · system default voice";
+  updateVoiceStatus();
+  return voices;
+ })();
+ try{return await voiceLoadPromise}finally{voiceLoadPromise=null}
+}
+function updateVoiceStatus(){
+ const v=voices[+$("voiceSelect").value];
+ $("voiceStatus").textContent=v?v.name.replace(/^Microsoft\s+/i,"").slice(0,28):"System default";
+}
+async function warmUpVoice(v){
+ if(!v)return;
+ const k=voiceKey(v); if(warmedVoices.has(k))return;
+ await new Promise(resolve=>{
+  let done=false;
+  const fin=()=>{if(done)return;done=true;clearTimeout(timer);warmedVoices.add(k);resolve();};
+  const u=new SpeechSynthesisUtterance("ready");
+  u.voice=v;u.lang=v.lang;u.rate=.92;u.volume=0;
+  u.onend=fin;u.onerror=fin;
+  const timer=setTimeout(fin,4000);
+  speechSynthesis.speak(u);   // queued, never cancels anything already playing
+ });
+}
+
+/* Silent synthesis pass. Browsers cannot cache speech audio, so this only makes the
+   voice engine (and, for online voices, its network connection) ready. */
+function silentSynthesis(text,voice,lang,runToken,onProgress=()=>{}){
+ return new Promise((resolve,reject)=>{
+  let settled=false,progress=0;
+  const u=new SpeechSynthesisUtterance(text);
+  u.rate=speechRate(lang);u.pitch=1;u.volume=0;
+  if(voice)u.voice=voice;
+  u.lang=voice?.lang||languageLocale(lang);
+  const finish=(ok,err)=>{
+   if(settled)return;settled=true;
+   clearInterval(timer);clearTimeout(watchdog);
+   ok?resolve():reject(err);
+  };
+  u.onboundary=e=>{if(typeof e.charIndex==="number"&&text.length){progress=Math.max(progress,e.charIndex/text.length*100);onProgress(Math.min(96,progress));}};
+  u.onend=()=>finish(true);
+  u.onerror=e=>finish(false,new Error(runToken!==speechRunToken?"cancelled":(e?.error||"voice preload failed")));
+  // When a newer run takes over we only stop waiting — never cancel() here,
+  // because that would kill the new announcement.
+  const timer=setInterval(()=>{
+   if(runToken!==speechRunToken)return finish(false,new Error("cancelled"));
+   if(progress<94){progress+=1.5;onProgress(progress);}
+  },400);
+  const watchdog=setTimeout(()=>{
+   if(runToken===speechRunToken)speechSynthesis.cancel();
+   finish(false,new Error("Voice preload timed out"));
+  },Math.max(20000,Math.min(180000,text.length*260)));
+  speechSynthesis.speak(u);
+ });
+}
+
+function speakText(text,voice,lang,runToken,rate=speechRate(lang)){
+ if(runToken!==speechRunToken)return Promise.reject(new Error("cancelled"));
+ return new Promise((resolve,reject)=>{
+  let settled=false;
+  const u=new SpeechSynthesisUtterance(text);
+  currentUtterance=u;
+  u.rate=rate;u.pitch=1;u.volume=announceVolume/100;
+  if(voice)u.voice=voice;
+  u.lang=voice?.lang||languageLocale(lang);
+  // Chrome stops Google network voices after ~15 s; a pause/resume nudge keeps them going.
+  const isGoogle=/google/i.test(voice?.name||"");
+  const keepAlive=isGoogle?setInterval(()=>{if(speechSynthesis.speaking&&!speechSynthesis.paused){speechSynthesis.pause();speechSynthesis.resume();}},10000):null;
+  const finish=(ok,err)=>{
+   if(settled)return;settled=true;
+   clearTimeout(watchdog);if(keepAlive)clearInterval(keepAlive);
+   currentUtterance=null;
+   ok?resolve():reject(err);
+  };
+  u.onend=()=>finish(true);
+  u.onerror=e=>finish(false,new Error(runToken!==speechRunToken||e?.error==="interrupted"||e?.error==="canceled"?"cancelled":(e?.error||"speech error")));
+  // Slower speaking speed needs a longer safety timeout.
+  const limit=Math.max(20000,Math.min(150000,text.length*190));
+  const watchdog=setTimeout(()=>{
+   if(runToken===speechRunToken)speechSynthesis.cancel();
+   finish(false,new Error(runToken===speechRunToken?"Speech timed out":"cancelled"));
+  },limit);
+  speechSynthesis.speak(u);
+ });
+}
+
+/* =========================================================================
+   CHIME
+   ========================================================================= */
+let chimeWarned=false;
+function ensureAudio(){
+ if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+ if(audioCtx.state==="suspended")audioCtx.resume().catch(()=>{});
+ return audioCtx;
+}
+function tone(freq,start,dur,vol=.12){
+ const ctx=ensureAudio(),o=ctx.createOscillator(),g=ctx.createGain();
+ vol*=announceVolume/100;
+ o.type="sine";o.frequency.value=freq;g.gain.setValueAtTime(0,ctx.currentTime+start);
+ g.gain.linearRampToValueAtTime(vol,ctx.currentTime+start+.025);
+ g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+start+dur);
+ o.connect(g);g.connect(ctx.destination);o.start(ctx.currentTime+start);o.stop(ctx.currentTime+start+dur+.03);
+}
+// Plays Ding.mp3 and waits for it to actually finish. Falls back to a built-in two-tone chime.
+function playChimeOnce(){
+ return new Promise(resolve=>{
+  const audio=$("airportDingAudio");
+  let done=false;
+  const fin=()=>{if(done)return;done=true;clearTimeout(t);if(audio)audio.onended=null;resolve();};
+  const fallback=async()=>{
+   if(!chimeWarned){chimeWarned=true;notice("Ding.mp3 could not play — using the built-in chime. Put Ding.mp3 next to this page.",false);}
+   try{tone(784,0,.9);tone(523,.45,1.1);}catch{}
+   await sleep(1600);fin();
+  };
+  const t=setTimeout(fin,8000);
+  if(!audio)return fallback();
+  try{audio.pause();audio.currentTime=0;audio.volume=announceVolume/100;}catch{}
+  audio.onended=fin;
+  audio.play().catch(fallback);
+ });
+}
+async function playChimeSequence(runToken){
+ await playChimeOnce();
+ if(isOn("doubleChime")&&runToken===speechRunToken){await sleep(150);await playChimeOnce();}
+ if(runToken===speechRunToken)await sleep(250);
+}
+
+/* =========================================================================
+   PLAYBACK
+   ========================================================================= */
+function setPlayBtn(disabled,label="▶ Play Announcement"){
+ const b=$("playBtn");if(!b)return;b.disabled=disabled;b.textContent=label;
+}
+function setOnAir(on){
+ $("livePill")?.classList.toggle("on-air",on);
+ if($("livePillText"))$("livePillText").textContent=on?"ON AIR":"SYSTEM READY";
+}
+function resetStatus(){
+ if($("speakStatus"))$("speakStatus").textContent="Ready";
+ if($("meterBar"))$("meterBar").style.width="0";
+ if($("voiceLoadPercent"))$("voiceLoadPercent").textContent="0%";
+}
+// Primary language segment plus an optional English segment, ordered by the bilingual setting.
+function buildSegments(text,lang,boardingData,englishText){
+ const segs=[{text,lang,boardingData}];
+ if(bilingualMode!=="off"&&lang!=="en"&&englishText){
+  const en={text:englishText,lang:"en",boardingData:boardingData?{...boardingData,language:"en"}:null};
+  bilingualMode==="before"?segs.unshift(en):segs.push(en);
+ }
+ return segs;
+}
+
+// Single playback path used by the main button, presets and history replay.
+async function performAnnouncement({text,lang,boardingData=null,englishText="",label="Announcement",presetId=null,preload=false,mode=activeTab}){
+ if(!text||INVALID_RE.test(text)){notice(text||"Nothing to announce.",false);return;}
+ const myRun=++speechRunToken;
+ try{speechSynthesis.cancel()}catch{}
+ isAnnouncing=true;activePlayingPresetId=presetId;setOnAir(true);renderReadyQueue();
+ setPlayBtn(true,"⏳ Preparing…");
+ const alive=()=>myRun===speechRunToken;
+ try{
+  if(!voicesReady)await loadVoices();
+  if(!alive())return;
+  await sleep(60); // Chrome can drop an utterance queued in the same tick as cancel()
+  if(!alive())return;
+  const segments=buildSegments(text,lang,boardingData,englishText).map(s=>({...s,voice:pickVoiceFor(s.lang),spoken:announcementSpeech(s.text,s.lang,s.boardingData)}));
+  setVoiceProgress(15,segments.some(s=>s.voice)?"Voice selected":"System voice selected");
+  for(const s of segments){await warmUpVoice(s.voice);if(!alive())return;}
+  if(preload){
+   const share=75/segments.length;
+   for(let k=0;k<segments.length;k++){
+    const s=segments[k],base=21+k*share;
+    setVoiceProgress(base,"Preparing complete announcement");
+    await silentSynthesis(s.spoken,s.voice,s.lang,myRun,p=>setVoiceProgress(base+p/100*share,"Preparing complete announcement"));
+    if(!alive())return;
+   }
+   setPlayBtn(true,"✓ Loaded · Starting…");
+   await sleep(250);
+  }
+  setVoiceProgress(100,"Voice ready");
+  duckMusic();
+  if(isOn("autoChime")){
+   if($("speakStatus"))$("speakStatus").textContent=`${label} · chime`;
+   await playChimeSequence(myRun);
+  }
+  for(let k=0;k<segments.length;k++){
+   if(!alive())return;
+   const s=segments[k];
+   if(k>0){await sleep(700);if(!alive())return;}
+   if($("speakStatus"))$("speakStatus").textContent=`${label} · playing${segments.length>1?` (${announcementLanguageEnglishName(s.lang)})`:""}`;
+   setPlayBtn(true,"🔊 On air…");
+   await speakText(s.spoken,s.voice,s.lang,myRun);
+  }
+  if(alive()){saveHistory({text,lang,mode,boardingData,englishText});notice(`${label} completed.`,true);}
+ }catch(err){
+  if(err?.message!=="cancelled"&&alive()){
+   console.error("Announcement failed:",err);
+   if($("speakStatus"))$("speakStatus").textContent="Voice failed";
+   notice(preload?"Voice could not be fully prepared. Try Live mode or another voice.":"Voice could not start. Try another voice.",false);
+  }
+ }finally{
+  if(alive()){
+   isAnnouncing=false;activePlayingPresetId=null;setOnAir(false);
+   restoreMusic();resetStatus();setPlayBtn(false);renderReadyQueue();
+  }
+ }
+}
+function speak(){
+ performAnnouncement({...currentEntry(),label:"Announcement",preload:speechPlaybackMode==="afterload"});
+}
+function stopSpeech(show=true){
+ speechRunToken++;
+ try{speechSynthesis.cancel()}catch{}
+ try{$("airportDingAudio")?.pause()}catch{}
+ currentUtterance=null;
+ isAnnouncing=false;activePlayingPresetId=null;setOnAir(false);
+ restoreMusic();resetStatus();setPlayBtn(false);renderReadyQueue();
+ if(show)notice("Announcement stopped.",true);
+}
+function setSpeechPlaybackMode(mode){
+ speechPlaybackMode=mode==="afterload"?"afterload":"live";
+ lsSet("koveli_speech_mode",speechPlaybackMode);
+ $("modeAfterLoad")?.classList.toggle("on",speechPlaybackMode==="afterload");
+ $("modeLive")?.classList.toggle("on",speechPlaybackMode==="live");
+ syncChipAria();
+ if($("playModeStatus"))$("playModeStatus").textContent=speechPlaybackMode==="afterload"?"After Load":"Live";
+ if($("playModeNote"))$("playModeNote").textContent=speechPlaybackMode==="afterload"
+  ?"Runs the whole announcement silently once before playing it aloud. Slower start; can help unstable online voices."
+  :"Starts speaking as soon as the voice is ready. Recommended.";
+}
+function notice(msg,ok=true){const el=$("alert");el.textContent=msg;el.className=`alert show ${ok?"ok":"err"}`;clearTimeout(notice.t);notice.t=setTimeout(()=>el.className="alert",3600)}
+function copyPreview(){
+ const e=currentEntry();
+ const parts=bilingualMode==="before"&&e.englishText?[e.englishText,e.text]:[e.text,e.englishText];
+ const out=bilingualMode!=="off"?parts.filter(Boolean).join("\n\n"):e.text;
+ navigator.clipboard?.writeText(out).then(()=>notice("Announcement copied.",true)).catch(()=>notice("Copy is not available in this browser.",false));
+}
+
+/* =========================================================================
+   PRESETS
+   ========================================================================= */
+function currentReadyInfo(){
+ let flight="",gate="",dest="",type="Announcement";
+ if(activeTab==="boarding"){
+  flight=$("bFlight").value.trim().toUpperCase();gate=$("bGate").value;dest=destinationText();
+  type=$("bType").selectedOptions[0]?.textContent||"Boarding";
+ }else if(activeTab==="paging"){
+  flight=$("pFlight").value.trim().toUpperCase();dest=$("pName").value.trim();type="Paging";
+ }else if(activeTab==="delay"){
+  flight=$("dFlight").value.trim().toUpperCase();dest=$("dDest").value.trim();type="Delay";
+ }else if(activeTab==="gatechange"){
+  flight=$("gFlight").value.trim().toUpperCase();gate=$("gNew").value;dest=$("gDest").value.trim();type="Gate Change";
+ }else if(activeTab==="cancel"){
+  flight=$("cFlight").value.trim().toUpperCase();dest=$("cDest").value.trim();type="Cancellation";
+ }else{type="Custom";}
+ const primary=[flight,gate?`Gate ${gate}`:""].filter(Boolean).join(" · ")||type;
+ return {flight,gate,dest,type,primary};
+}
+function saveReadyQueue(){
+ lsSet("koveli_ready_announcements",JSON.stringify(readyAnnouncements));
+ renderReadyQueue();
+}
+function buildReadyItemFromCurrent(){
+ const e=currentEntry();
+ if(!e.text||INVALID_RE.test(e.text))return null;
+ const info=currentReadyInfo();
+ return {
+  id:Date.now()+"_"+Math.random().toString(36).slice(2,7),
+  label:info.primary,flight:info.flight,gate:info.gate,destination:info.dest,callType:info.type,
+  text:e.text,englishText:e.englishText,boardingData:e.boardingData,
+  language:e.lang,mode:activeTab,added:new Date().toISOString()
+ };
+}
+function presetCurrentToSlot(slotIndex=null){
+ const item=buildReadyItemFromCurrent();
+ if(!item){notice("Fill in the announcement details before saving a preset.",false);return}
+ let index=slotIndex;
+ if(index===null||index===undefined){
+  index=Array.from({length:READY_MAX},(_,i)=>i).find(i=>!readyAnnouncements[i]);
+  if(index===undefined){notice(`All ${READY_MAX} presets are in use. Clear one first.`,false);return}
+ }
+ if(readyAnnouncements[index]){notice("That preset is already in use. Clear it first.",false);return}
+ const dup=readyAnnouncements.findIndex(r=>r&&r.flight&&r.flight===item.flight&&r.callType===item.callType&&r.language===item.language);
+ while(readyAnnouncements.length<=index)readyAnnouncements.push(null);
+ readyAnnouncements[index]=item;
+ saveReadyQueue();
+ notice(`${item.label} saved to Preset ${index+1}.${dup>=0?` (Preset ${dup+1} has the same flight and call type.)`:""}`,dup<0);
+ queuePresetPreparation(index);
+}
+function addCurrentToReady(){presetCurrentToSlot(null);}
+function removeReadyAnnouncement(i){
+ const removed=readyAnnouncements[i];
+ if(removed?.id){readyPrepared.delete(removed.id);readyLoading.delete(removed.id);readyButtonProgress.delete(removed.id);}
+ readyAnnouncements[i]=null;
+ while(readyAnnouncements.length&&!readyAnnouncements[readyAnnouncements.length-1])readyAnnouncements.pop();
+ saveReadyQueue();
+ notice(`Preset ${i+1} cleared.`,true);
+}
+function isPresetReady(item){return !!item?.id&&readyPrepared.has(item.id);}
+function presetGroupLabel(r){
+ const g=r.boardingData?.groups||[];
+ const real=g.filter(x=>x!=="All passengers");
+ return real.length?real.join(" + "):"";
+}
+function presetLanguageLabel(r){
+ const base=r.language&&r.language!=="en"?r.language.toUpperCase():"";
+ const bi=bilingualMode!=="off"&&base&&(r.englishText||r.boardingData);
+ return base?(bi?base+"+EN":base):"";
+}
+function renderReadyQueue(){
+ const box=$("readyList");
+ if(!box)return;
+ const occupied=readyAnnouncements.filter(Boolean).length;
+ $("readyCount").textContent=`${occupied} / ${READY_MAX} preset`;
+ box.innerHTML=Array.from({length:READY_MAX},(_,i)=>{
+  const r=readyAnnouncements[i];
+  if(!r)return `<div class="ready-slot empty"><div class="ready-title">Preset ${i+1}</div><div class="ready-meta">Empty · set flight details, then click PRESET ${i+1} above</div></div>`;
+  const loaded=isPresetReady(r),loading=readyLoading.has(r.id),playing=activePlayingPresetId===r.id;
+  const state=playing?"🔊 Playing":loading?"⏳ Preparing voice…":loaded?"✓ READY · PLAY":"Voice not prepared";
+  return `<div class="ready-slot">
+   <div class="ready-top"><div>
+    <div class="ready-title">Preset ${i+1} · ${escapeHtml(r.label)}</div>
+    <div class="ready-meta">${state} · ${escapeHtml(announcementLanguageEnglishName(r.language))}${presetLanguageLabel(r).endsWith("+EN")?" + English":""}</div>
+   </div></div>
+   <div class="ready-text" dir="${r.language==="ar"?"rtl":"ltr"}">${escapeHtml((r.text||"").slice(0,170))}${(r.text||"").length>170?"…":""}</div>
+   <div class="ready-actions">
+    ${playing?`<button class="ready-play" onclick="stopSpeech(true)">■ Stop</button>`
+     :loaded?`<button class="ready-play" onclick="playReadyAnnouncement(${i})">▶ Play</button>`
+     :`<button class="ready-play" ${loading?"disabled":""} onclick="queuePresetPreparation(${i})">${loading?"⏳ Loading…":"⬇ Prepare"}</button>`}
+    <button class="mini" onclick="loadReadyAnnouncement(${i})">↗ Edit</button>
+    <button class="mini" onclick="removeReadyAnnouncement(${i})">✕ Clear</button>
+   </div>
+  </div>`;
+ }).join("");
+
+ const top=$("readyTopbar");
+ if(!top)return;
+ top.innerHTML=`<div class="ready-topbar-label">✈ FLIGHT PRESETS</div>`+Array.from({length:READY_MAX},(_,i)=>{
+  const r=readyAnnouncements[i];
+  if(!r)return `<div class="ready-flight-wrap"><button class="ready-flight-btn empty" type="button" onclick="presetCurrentToSlot(${i})" title="Save the current announcement to Preset ${i+1} (Alt+${i+1})"><b>PRESET ${i+1}</b><span>Click to save current</span></button></div>`;
+  const loaded=isPresetReady(r),loading=readyLoading.has(r.id),playing=activePlayingPresetId===r.id;
+  const details=[r.destination,presetGroupLabel(r),presetLanguageLabel(r)].filter(Boolean).join(" · ");
+  const pct=Math.round(readyButtonProgress.get(r.id)||2);
+  const status=playing?"♪ ON AIR":loading?`PREPARING ${pct}%`:loaded?"✓ READY · PLAY":"⬇ PREPARE VOICE";
+  const action=loaded?`playReadyAnnouncement(${i})`:`queuePresetPreparation(${i})`;
+  return `<div class="ready-flight-wrap">
+   <button class="ready-flight-btn ${loaded?"loaded":""} ${loading?"loading":""} ${playing?"playing":""}" type="button" ${loading?"disabled":""} onclick="${action}" title="Alt+${i+1}">
+    <b>${escapeHtml(r.label)}</b>
+    <span>${details?escapeHtml(details)+"<br>":""}Preset ${i+1} · ${escapeHtml(status)}</span>
+    ${loading?`<span class="preset-progress-track"><span class="preset-progress-fill" style="width:${pct}%"></span></span>`:""}
+    ${playing?`<span class="preset-audio-effect"><i></i><i></i><i></i><i></i><i></i></span>`:""}
+   </button>
+   ${playing?`<button class="preset-stop-btn" type="button" onclick="event.stopPropagation();stopSpeech(true)">■ STOP</button>`
+    :`<button class="ready-clear" type="button" onclick="event.stopPropagation();removeReadyAnnouncement(${i})" title="Clear Preset ${i+1}" aria-label="Clear Preset ${i+1}">✕</button>`}
+  </div>`;
+ }).join("");
+}
+
+let presetPreparationQueue=Promise.resolve();
+function queuePresetPreparation(i){
+ const item=readyAnnouncements[i];
+ if(!item)return;
+ if(isPresetReady(item)){playReadyAnnouncement(i);return}
+ if(readyLoading.has(item.id))return;
+ readyLoading.add(item.id);
+ readyButtonProgress.set(item.id,2);
+ renderReadyQueue();
+ presetPreparationQueue=presetPreparationQueue.catch(()=>{}).then(()=>preparePreset(item.id));
+}
+function setPresetProgress(id,p){readyButtonProgress.set(id,Math.max(2,Math.min(100,p)));renderReadyQueue();}
+async function preparePreset(id){
+ // Never interrupt a live announcement — wait for it to finish first.
+ while(isAnnouncing)await sleep(400);
+ const item=readyAnnouncements.find(x=>x?.id===id);
+ if(!item){readyLoading.delete(id);return;}
+ const myRun=++speechRunToken;
+ const lang=item.language||"en";
+ try{
+  setPresetProgress(id,10);
+  if(!voicesReady)await loadVoices();
+  if(myRun!==speechRunToken)throw new Error("cancelled");
+  const v=pickVoiceFor(lang);
+  setPresetProgress(id,35);
+  await warmUpVoice(v);
+  // Bilingual presets also need the English voice warm.
+  if(lang!=="en"&&bilingualMode!=="off")await warmUpVoice(pickVoiceFor("en"));
+  if(myRun!==speechRunToken)throw new Error("cancelled");
+  setPresetProgress(id,55);
+  // Prime the engine with the opening sentence only — quick, silent, and enough to wake online voices.
+  const spoken=announcementSpeech(item.text,lang,item.boardingData);
+  const opening=spoken.split(/(?<=[.。!?！？])\s*/)[0].slice(0,160)||spoken.slice(0,160);
+  await silentSynthesis(opening,v,lang,myRun,p=>setPresetProgress(id,55+p*.4));
+  if(myRun!==speechRunToken)throw new Error("cancelled");
+  readyPrepared.set(id,{voiceKey:voiceKey(v),language:lang});
+  readyLoading.delete(id);readyButtonProgress.delete(id);
+  renderReadyQueue();
+  notice(`${item.label} is READY.`,true);
+ }catch(err){
+  readyLoading.delete(id);readyButtonProgress.delete(id);
+  renderReadyQueue();
+  if(err?.message==="cancelled"){
+   // An announcement took priority; try again once it has finished.
+   const idx=readyAnnouncements.findIndex(x=>x?.id===id);
+   if(idx>=0&&!isPresetReady(readyAnnouncements[idx]))setTimeout(()=>queuePresetPreparation(idx),600);
+  }else{
+   console.warn("Preset preparation failed:",err);
+   notice("Could not prepare this preset. Try another voice or Play Live.",false);
+  }
+ }
+}
+
+let pendingPresetPlayIndex=null;
+function presetGreetingLabel(value){
+ if(!value||value==="auto")return `Automatic · ${greetingFor("auto")}`;
+ return {morning:"Good morning",afternoon:"Good afternoon",evening:"Good evening",attention:"Attention please"}[value]||value;
+}
+function presetCallTypeLabel(value,fallback=""){
+ return {boarding:"Boarding Call",priority:"Priority / Group Call",final:"Final Call",closing:"Gate Closing"}[value]||fallback||"Announcement";
+}
+function announcementLanguageEnglishName(code){
+ return {en:"English",ar:"Arabic","zh-HK":"Chinese — Cantonese (Hong Kong)","zh-CN":"Chinese — Mandarin (Mainland)","zh-SG":"Chinese — Mandarin (Singapore)",ru:"Russian",it:"Italian",ja:"Japanese"}[code]||"English";
+}
+function playReadyAnnouncement(i){
+ const item=readyAnnouncements[i];
+ if(!item)return;
+ if(!isPresetReady(item)){queuePresetPreparation(i);return;}
+ const d=item.boardingData||{};
+ const isBoarding=!!item.boardingData;
+ const groups=presetGroupLabel(item);
+ const willSayEnglish=item.language==="en"||(bilingualMode!=="off"&&(item.englishText||isBoarding));
+ $("confirmFlight").textContent=(d.flight||item.flight||"—").toUpperCase();
+ $("confirmDestination").textContent=[d.dest,d.dest2].filter(Boolean).join(" and ")||item.destination||"—";
+ $("confirmSalutation").textContent=isBoarding?(willSayEnglish?presetGreetingLabel(d.greeting)+(item.language!=="en"?" (English part)":""):"— (not used in this language)"):"—";
+ $("confirmGate").textContent=(d.gate||item.gate||"—").toUpperCase();
+ $("confirmCallType").textContent=isBoarding?presetCallTypeLabel(d.type,item.callType):(item.callType||"Announcement");
+ $("confirmLanguage").textContent=announcementLanguageEnglishName(item.language)+(item.language!=="en"&&willSayEnglish?` + English (${bilingualMode==="before"?"first":"after"})`:"");
+ $("confirmGroup").textContent=groups||"All passengers";
+ $("confirmGroupBox").style.display=isBoarding&&(d.type==="priority"||groups)?"block":"none";
+ pendingPresetPlayIndex=i;
+ openModal("presetPlayModal");
+}
+function closePresetPlayConfirmation(){pendingPresetPlayIndex=null;closeModal("presetPlayModal");}
+function confirmPresetPlay(){
+ const i=pendingPresetPlayIndex;
+ closePresetPlayConfirmation();
+ if(i===null||i===undefined)return;
+ const item=readyAnnouncements[i];
+ if(!item)return;
+ // Rebuild boarding text at play time so the automatic greeting matches the current time of day.
+ if(item.boardingData){
+  item.text=buildBoardingFromData(item.boardingData);
+  item.englishText=(item.boardingData.language||"en")!=="en"?buildBoardingFromData({...item.boardingData,language:"en"}):"";
+  saveReadyQueue();
+ }
+ performAnnouncement({text:item.text,lang:item.language||"en",boardingData:item.boardingData,englishText:item.englishText||"",label:item.label,presetId:item.id,preload:false,mode:item.mode||"boarding"});
+}
+function setUiLanguage(lang){
+ if(!lang||!$("bLanguage")||$("bLanguage").value===lang)return;
+ if(loadedVoiceLanguage)rememberVoiceSelection(loadedVoiceLanguage);
+ $("bLanguage").value=lang;
+ updatePreview();
+ loadVoices(true);
+}
+function loadReadyAnnouncement(i){
+ const item=readyAnnouncements[i];
+ if(!item)return;
+ setUiLanguage(item.language||"en");
+ if(item.boardingData){
+  activate("boarding");const d=item.boardingData;
+  for(const [id,key] of [["bFlight","flight"],["bDest","dest"],["bGate","gate"],["bType","type"],["bGreeting","greeting"],["bCategory","category"],["bStyle","style"]])if(d[key]!==undefined&&$(id))$(id).value=d[key];
+  setSecondDestinationVisible(!!d.dest2,d.dest2||"");
+  document.querySelectorAll('#boardingGroups .chip').forEach(b=>b.classList.toggle("on",(d.groups||["All passengers"]).includes(b.dataset.group)));
+  updatePreview();notice("Boarding details loaded. Changes can be saved to a new preset.",true);return;
+ }
+ activate("custom");
+ $("customText").value=item.text;
+ updatePreview();
+ notice("Loaded into Custom Studio. You can edit it or play it.",true);
+}
+
+/* =========================================================================
+   HISTORY
+   ========================================================================= */
+function persistHistory(){lsSet("gatecast_x_history",JSON.stringify(historyData));}
+function saveHistory(entry=currentEntry()){
+ const {text,lang="en",mode=activeTab,boardingData=null,englishText=""}=entry||{};
+ if(!text||INVALID_RE.test(text))return false;
+ if(historyData[0]?.text===text)return false;
+ historyData.unshift({text,mode,lang,boardingData,englishText,time:new Date().toLocaleString("en-GB",{timeZone:TZ})});
+ historyData=historyData.slice(0,30);
+ persistHistory();
+ renderHistory();
+ return true;
+}
+function renderHistory(){
+ if(!historyData.length){$("history").innerHTML=`<div style="color:#6f8aa0;font-size:12px;text-align:center;padding:18px">No saved announcements yet.</div>`;return}
+ $("history").innerHTML=historyData.map((h,i)=>`<div class="history-item"><div class="history-top"><div class="history-title">${escapeHtml(String(h.mode||"").toUpperCase())}${h.lang&&h.lang!=="en"?" · "+escapeHtml(h.lang.toUpperCase()):""}</div><div class="history-time">${escapeHtml(h.time)}</div></div><div class="history-text" dir="${h.lang==="ar"?"rtl":"ltr"}">${escapeHtml(h.text.slice(0,145))}${h.text.length>145?"…":""}</div><div class="mini-actions"><button class="mini" onclick="replayHistory(${i})">▶ Replay</button><button class="mini" onclick="loadHistoryItem(${i})">↗ Load</button><button class="mini" onclick="deleteHistory(${i})">Delete</button></div></div>`).join("");
+}
+function replayHistory(i){
+ const h=historyData[i];if(!h)return;
+ let text=h.text,englishText=h.englishText||"";
+ // Boarding replays rebuild the text so an automatic greeting stays correct.
+ if(h.boardingData){text=buildBoardingFromData(h.boardingData);englishText=(h.lang||"en")!=="en"?buildBoardingFromData({...h.boardingData,language:"en"}):"";}
+ performAnnouncement({text,lang:h.lang||"en",boardingData:h.boardingData||null,englishText,label:"Replay",mode:h.mode,preload:speechPlaybackMode==="afterload"});
+}
+function loadHistoryItem(i){const h=historyData[i];if(!h)return;setUiLanguage(h.lang||"en");$("customText").value=h.text;activate("custom");notice("Loaded into Custom Studio.",true)}
+function deleteHistory(i){historyData.splice(i,1);persistHistory();renderHistory()}
+function setCustom(t){$("customText").value=t;updatePreview()}
+function activate(tab){
+ // Switching tabs never cuts off an announcement that is on air.
+ activeTab=tab;
+ document.querySelectorAll(".tab").forEach(b=>{const on=b.dataset.tab===tab;b.classList.toggle("active",on);b.setAttribute("aria-selected",on?"true":"false");});
+ document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===tab));
+ $("modeStatus").textContent={boarding:"Boarding",paging:"Paging",delay:"Delay",gatechange:"Gate Change",cancel:"Cancellation",custom:"Custom"}[tab]||tab;
+ updatePreview();
+}
+
+/* =========================================================================
+   BACKUP / RESTORE
+   ========================================================================= */
+function exportBackup(){
+ const data={
+  app:"koveli-announcement",version:3,exported:new Date().toISOString(),
+  presets:readyAnnouncements,history:historyData,
+  directory:{destinations:DESTINATIONS,airlines:AIRLINES},
+  settings:{bilingual:bilingualMode,volume:announceVolume,playback:speechPlaybackMode,voices:selectedVoiceByLanguage}
+ };
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download=`koveli-backup-${new Intl.DateTimeFormat("en-CA",{timeZone:TZ}).format(new Date())}.json`;
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+ notice("Backup downloaded.",true);
+}
+async function importBackup(file){
+ try{
+  const data=JSON.parse(await file.text());
+  if(data?.app!=="koveli-announcement")throw new Error("this is not a Koveli backup file");
+  if(!confirm("Replace the current presets and history with this backup?\nDestinations and airlines will be merged."))return;
+  if(isAnnouncing)stopSpeech(false);
+  if(Array.isArray(data.presets)){
+   readyPrepared.clear();readyLoading.clear();readyButtonProgress.clear();
+   readyAnnouncements=data.presets.slice(0,READY_MAX).map(x=>x&&x.id&&typeof x.text==="string"?x:null);
+   saveReadyQueue();
+  }
+  if(Array.isArray(data.history)){historyData=data.history.filter(h=>h&&typeof h.text==="string").slice(0,30);persistHistory();renderHistory();}
+  if(data.directory){mergeDirectory(data.directory);saveDirectory();fillDestinations();}
+  const s=data.settings||{};
+  if(["off","after","before"].includes(s.bilingual)){bilingualMode=s.bilingual;lsSet("koveli_bilingual",bilingualMode);$("bBilingual").value=bilingualMode;}
+  if(Number.isFinite(+s.volume)){announceVolume=Math.min(100,Math.max(10,+s.volume));lsSet("koveli_announce_volume",String(announceVolume));}
+  if(s.playback)setSpeechPlaybackMode(s.playback);
+  if(s.voices&&typeof s.voices==="object"){selectedVoiceByLanguage={...selectedVoiceByLanguage,...s.voices};lsSet("koveli_voice_by_language",JSON.stringify(selectedVoiceByLanguage));}
+  syncSettingsUi();updatePreview();
+  readyAnnouncements.forEach((r,i)=>{if(r)queuePresetPreparation(i);});
+  notice("Backup restored. Presets are being prepared.",true);
+ }catch(e){notice("Import failed: "+(e?.message||"invalid file"),false);}
+}
+
+/* =========================================================================
+   YOUTUBE MUSIC
+   ========================================================================= */
+const PINNED_YOUTUBE_TRACKS=[{id:"_MDi8hb1Jaw",title:"Requested YouTube Music"}];
+function withPinnedMusic(results){
+ const merged=[...PINNED_YOUTUBE_TRACKS,...(Array.isArray(results)?results:[])];
+ return merged.filter((t,i)=>t&&t.id&&merged.findIndex(x=>x&&x.id===t.id)===i);
+}
+let musicSearchResults=[],currentMusicIndex=-1,lastTimeMusicPeriod="",musicSearchInFlight=null;
+let musicDucked=false,musicWasPlaying=false,musicFadeToken=0,ytErrorStreak=0;
+const MUSIC_VOLUME=15;            // background music is always kept at 15%
+function hasYoutubeApiKey(){return YOUTUBE_API_KEY&&!YOUTUBE_API_KEY.includes("PASTE_YOUR_");}
+function setMusicSearchStatus(msg,ok=true){const el=$("musicSearchStatus");if(!el)return;el.textContent=msg;el.style.color=ok?"#9dc7c5":"#ffaaa9";}
+function renderMusicTextList(){
+ const box=$("musicTextList");if(!box)return;
+ if(!musicSearchResults.length){box.innerHTML='<div class="yt-search-status">No music loaded.</div>';return;}
+ box.innerHTML=musicSearchResults.map((v,i)=>{
+  const active=i===currentMusicIndex;
+  return `<button class="yt-track ${active?"active":""}" type="button" onclick="selectMusicTrack(${i})"><span class="yt-track-num">${i+1}</span><span class="yt-track-title">${escapeHtml(v.title)}</span><span class="yt-track-state">${active?"♪ SELECTED":""}</span></button>`;
+ }).join("");
+}
+function currentTimeMusicPeriod(){
+ const h=localHour();
+ if(h<12)return {key:"morning",label:"Morning",query:"luxury business lounge relaxing soft morning piano acoustic instrumental ambient background music"};
+ if(h<18)return {key:"afternoon",label:"Afternoon",query:"luxury business lounge relaxing light jazz instrumental cafe ambient background music"};
+ return {key:"evening",label:"Evening",query:"luxury lounge relaxing evening smooth jazz piano instrumental ambient background music"};
+}
+const MUSIC_CACHE_KEY="koveli_youtube_music_cache_v2";
+function todayMusicKey(){return new Intl.DateTimeFormat("en-CA",{timeZone:TZ}).format(new Date());}
+function readMusicCache(){const x=lsJson(MUSIC_CACHE_KEY,{});return x&&typeof x==="object"?x:{};}
+function cachedMusicForPeriod(p){const it=readMusicCache()[p.key];return it&&it.date===todayMusicKey()&&Array.isArray(it.results)&&it.results.length?it:null;}
+function saveMusicCache(p,results){const c=readMusicCache();c[p.key]={date:todayMusicKey(),savedAt:Date.now(),query:p.query,results:results.slice(0,15)};lsSet(MUSIC_CACHE_KEY,JSON.stringify(c));}
+function showManualYoutubeFallback(show=true){const el=$("youtubeQuotaFallback");if(el)el.style.display=show?"block":"none";}
+function loadCachedMusic(period,autoPlay=false){
+ const cached=cachedMusicForPeriod(period);
+ if(!cached)return false;
+ musicSearchResults=withPinnedMusic(cached.results);
+ currentMusicIndex=-1;lastTimeMusicPeriod=period.key;
+ renderMusicTextList();
+ setMusicSearchStatus(`${period.label} playlist · saved on this device`);
+ showManualYoutubeFallback(false);
+ selectMusicTrack(0,false);
+ if(autoPlay)setTimeout(()=>tryAutoplaySelectedMusic(),250);
+ return true;
+}
+async function autoSearchMusicForTime(){
+ const period=currentTimeMusicPeriod();
+ if($("musicPeriodLabel"))$("musicPeriodLabel").textContent=`${period.label} Lounge Music`;
+ if($("musicSearchText"))$("musicSearchText").value=period.query;
+ if(loadCachedMusic(period,true))return;
+ if(period.key===lastTimeMusicPeriod&&musicSearchResults.length)return;
+ lastTimeMusicPeriod=period.key;
+ setMusicSearchStatus(`${period.label} · finding today's playlist…`);
+ await searchYoutubeMusic(true);
+}
+function tryAutoplaySelectedMusic(attempt=0){
+ if(!musicSearchResults.length)return;
+ if(currentMusicIndex<0)currentMusicIndex=0;
+ const item=musicSearchResults[currentMusicIndex];
+ ensureYouTubePlayer();
+ if(!ytReady){pendingVideoId=item.id;if(attempt<40)setTimeout(()=>tryAutoplaySelectedMusic(attempt+1),500);return;}
+ try{
+  ytPlayer.loadVideoById(item.id);
+  ytPlayer.setVolume(MUSIC_VOLUME);
+  ytPlayer.playVideo();
+  setYoutubeStatus("Playing automatically · "+item.title);
+ }catch(e){console.warn(e)}
+}
+function checkTimeBasedMusic(){if(currentTimeMusicPeriod().key!==lastTimeMusicPeriod)autoSearchMusicForTime();}
+async function searchYoutubeMusic(autoPlay=false){
+ if(musicSearchInFlight)return musicSearchInFlight;   // avoid duplicate API calls
+ const q=($("musicSearchText")?.value||"").trim();
+ const period=currentTimeMusicPeriod();
+ if(!q||!hasYoutubeApiKey()){setMusicSearchStatus("Use a YouTube link below.");showManualYoutubeFallback(true);return;}
+ musicSearchInFlight=(async()=>{
+  setMusicSearchStatus("Finding lounge music…");
+  try{
+   const url="https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&videoSyndicated=true&safeSearch=strict&maxResults=15&q="+encodeURIComponent(q)+"&key="+encodeURIComponent(YOUTUBE_API_KEY);
+   const res=await fetch(url);const data=await res.json();
+   if(!res.ok)throw new Error(data?.error?.message||"YouTube search failed");
+   const decode=s=>{const t=document.createElement("textarea");t.innerHTML=s;return t.value;}; // titles arrive HTML-encoded
+   musicSearchResults=withPinnedMusic((data.items||[]).map(x=>({id:x?.id?.videoId||"",title:decode(x?.snippet?.title||"Untitled music")})).filter(x=>x.id));
+   currentMusicIndex=-1;renderMusicTextList();
+   if(musicSearchResults.length){
+    saveMusicCache(period,musicSearchResults);showManualYoutubeFallback(false);
+    setMusicSearchStatus(`${period.label} playlist · saved locally for today`);
+    selectMusicTrack(0,false);
+    if(autoPlay)setTimeout(()=>tryAutoplaySelectedMusic(),250);
+   }else{setMusicSearchStatus("No automatic playlist available. Use a YouTube link below.");showManualYoutubeFallback(true);}
+  }catch(e){
+   console.warn("YouTube automatic search unavailable:",e);
+   if(loadCachedMusic(period,autoPlay))return;
+   musicSearchResults=withPinnedMusic([]);renderMusicTextList();
+   setMusicSearchStatus("Automatic search unavailable · use a YouTube link below.");
+   showManualYoutubeFallback(true);
+  }
+ })();
+ try{await musicSearchInFlight}finally{musicSearchInFlight=null}
+}
+function selectMusicTrack(index,playNow=true){
+ if(index<0||index>=musicSearchResults.length)return;
+ currentMusicIndex=index;
+ const item=musicSearchResults[index];
+ if($("youtubeUrl"))$("youtubeUrl").value="https://www.youtube.com/watch?v="+item.id;
+ renderMusicTextList();
+ ensureYouTubePlayer();
+ if(!ytReady){pendingVideoId=item.id;setYoutubeStatus("Player loading · music queued");return;}
+ try{
+  if(playNow){ytPlayer.loadVideoById(item.id);ytPlayer.setVolume(MUSIC_VOLUME);setYoutubeStatus("Playing · "+item.title);}
+  else{ytPlayer.cueVideoById(item.id);setYoutubeStatus("Selected · "+item.title);}
+ }catch(e){console.warn(e)}
+}
+function playNextMusic(){if(!musicSearchResults.length)return;selectMusicTrack(currentMusicIndex<0?0:(currentMusicIndex+1)%musicSearchResults.length,true);}
+function parseYouTubeId(value){
+ const raw=(value||"").trim();
+ if(/^[A-Za-z0-9_-]{11}$/.test(raw))return raw;
+ try{
+  const u=new URL(raw);const host=u.hostname.replace(/^www\.|^m\./,"").toLowerCase();
+  if(host==="youtu.be")return u.pathname.split("/").filter(Boolean)[0]||"";
+  if(host.endsWith("youtube.com")||host.endsWith("youtube-nocookie.com")){
+   for(const p of ["/shorts/","/embed/","/live/"])if(u.pathname.startsWith(p))return u.pathname.split("/")[2]||"";
+   return u.searchParams.get("v")||"";
+  }
+ }catch{}
+ return "";
+}
+function youtubeErrorMessage(code){
+ return {2:"Invalid YouTube video ID.",5:"This video cannot be played in the HTML5 YouTube player.",100:"This YouTube video was removed or is private.",101:"The video owner does not allow embedding.",150:"The video owner does not allow embedding."}[code]||`YouTube playback error (${code}).`;
+}
+function setYoutubeStatus(text,ok=true){const el=$("youtubeStatus");if(el){el.textContent=text;el.style.color=ok?"":"#ffb4b4"}}
+function createYouTubePlayer(){
+ if(ytPlayer||!window.YT||typeof YT.Player!=="function")return false;
+ clearInterval(ytCreateTimer);
+ ytPlayer=new YT.Player("youtubePlayer",{
+  height:"100%",width:"100%",
+  playerVars:{playsinline:1,controls:1,rel:0,enablejsapi:1,autoplay:1},
+  events:{
+   onReady:()=>{
+    ytReady=true;setYoutubeStatus("Player ready");
+    try{ytPlayer.setVolume(MUSIC_VOLUME)}catch{}
+    if(pendingVideoId){
+     const id=pendingVideoId;pendingVideoId=null;
+     try{
+      if(musicSearchResults.some(x=>x.id===id)){ytPlayer.loadVideoById(id);setYoutubeStatus("Playing automatically");}
+      else{ytPlayer.cueVideoById(id);setYoutubeStatus("Video loaded · ready");}
+     }catch{ytPlayer.cueVideoById(id);setYoutubeStatus("Music ready · press Play Music");}
+    }
+   },
+   onStateChange:e=>{
+    if(e.data===YT.PlayerState.PLAYING){
+     ytErrorStreak=0;
+     if(musicDucked){musicWasPlaying=true;try{ytPlayer.pauseVideo()}catch{}return;}  // stays silent until the announcement ends
+     setYoutubeStatus("Playing");
+    }
+    else if(e.data===YT.PlayerState.PAUSED&&!musicDucked)setYoutubeStatus("Paused");
+    else if(e.data===YT.PlayerState.ENDED){setYoutubeStatus("Finished");if(musicSearchResults.length)playNextMusic();}
+    else if(e.data===YT.PlayerState.CUED)setYoutubeStatus("Video loaded · ready");
+   },
+   onAutoplayBlocked:()=>setYoutubeStatus("Autoplay blocked by browser · press Play Music once",false),
+   onError:e=>{
+    const msg=youtubeErrorMessage(e.data);setYoutubeStatus(msg,false);
+    ytErrorStreak++;
+    // Skip broken/unembeddable tracks, but stop once every track has failed (no endless loop).
+    if(musicSearchResults.length>1&&ytErrorStreak<musicSearchResults.length)setTimeout(playNextMusic,1200);
+    else{notice(ytErrorStreak>1?"None of the playlist videos can be played here. Paste a different YouTube link.":msg,false);ytErrorStreak=0;}
+   }
+  }
+ });
+ return true;
+}
+function onYouTubeIframeAPIReady(){createYouTubePlayer()}
+function ensureYouTubePlayer(){
+ if(createYouTubePlayer()||ytPlayer)return;
+ if(!ytCreateTimer){
+  ytCreateTimer=setInterval(()=>{if(createYouTubePlayer())clearInterval(ytCreateTimer);},250);
+  setTimeout(()=>{if(!ytReady)setYoutubeStatus(location.protocol==="file:"?"Local file mode · host the page over HTTPS for YouTube":"YouTube API still loading…",false)},5000);
+ }
+}
+function openCurrentYouTube(){const id=parseYouTubeId($("youtubeUrl").value);if(!id){notice("Enter a valid YouTube URL first.",false);return}window.open("https://www.youtube.com/watch?v="+id,"_blank","noopener");}
+function loadYouTubeMusic(){
+ const raw=$("youtubeUrl").value,id=parseYouTubeId(raw);
+ if(!id){notice("Please enter a valid YouTube URL or 11-character video ID.",false);return}
+ lsSet("gatecast_youtube_url",raw.trim());
+ ensureYouTubePlayer();
+ if(!ytReady){pendingVideoId=id;setYoutubeStatus("Player loading · video queued");notice("YouTube player is loading. When ready, press Play Music.",true);return}
+ try{ytPlayer.cueVideoById(id);ytPlayer.setVolume(MUSIC_VOLUME);setYoutubeStatus("Video loaded · ready");notice("YouTube video loaded. Press Play Music.",true);}
+ catch{setYoutubeStatus("Unable to load video",false);notice("Could not load the YouTube video.",false);}
+}
+function playMusic(){
+ ensureYouTubePlayer();
+ if(!ytReady){notice("YouTube player is still loading.",false);return}
+ try{ytPlayer.setVolume(MUSIC_VOLUME);ytPlayer.playVideo();if(musicDucked)musicWasPlaying=true;setYoutubeStatus("Starting…");}
+ catch{notice("YouTube could not start playback.",false)}
+}
+function pauseMusic(){if(ytReady){try{ytPlayer.pauseVideo();if(musicDucked)musicWasPlaying=false;}catch{}}}
+function setMusicVolume(){
+ lsDel("koveli_music_volume");
+ if(ytReady){try{ytPlayer.setVolume(MUSIC_VOLUME)}catch{}}
+}
+function fadeMusicTo(target,duration=700){
+ if(!ytReady||!ytPlayer)return;
+ const token=++musicFadeToken;
+ let from=0;try{from=ytPlayer.getVolume()}catch{return}
+ const started=performance.now();
+ const step=now=>{
+  if(token!==musicFadeToken)return;
+  const t=Math.min(1,(now-started)/duration);
+  const eased=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  try{ytPlayer.setVolume(Math.round(from+(target-from)*eased))}catch{return}
+  if(t<1)requestAnimationFrame(step);
+ };
+ requestAnimationFrame(step);
+}
+// Announcement starts: pause the music.
+function duckMusic(){
+ if(musicDucked||!ytReady||!ytPlayer)return;
+ try{
+  const s=ytPlayer.getPlayerState();
+  musicWasPlaying=s===YT.PlayerState.PLAYING||s===YT.PlayerState.BUFFERING;
+  musicDucked=true;musicFadeToken++;
+  if(musicWasPlaying)ytPlayer.pauseVideo();
+  setYoutubeStatus("Paused for announcement");
+ }catch(e){console.warn("Could not pause YouTube music:",e)}
+}
+// Announcement ends or is stopped: play the music again and fade it back up to 15%.
+function restoreMusic(){
+ if(!musicDucked)return;
+ musicDucked=false;
+ if(!ytReady||!ytPlayer)return;
+ try{
+  if(musicWasPlaying){
+   ytPlayer.setVolume(0);
+   ytPlayer.playVideo();
+   fadeMusicTo(MUSIC_VOLUME,1200);
+  }else setYoutubeStatus("Paused");
+ }catch(e){console.warn("Could not resume YouTube music:",e)}
+}
+
+/* =========================================================================
+   KEEP-WARM, SETTINGS, BINDINGS, INIT
+   ========================================================================= */
+// Keeps every language used by a READY preset warm (rotating), not just the on-screen language.
+let keepWarmIdx=0;
+function startReadyVoiceKeepWarm(){
+ setInterval(()=>{
+  try{
+   if(document.hidden||isAnnouncing||speechSynthesis.speaking||speechSynthesis.pending)return;
+   const langs=[...new Set(readyAnnouncements.filter(x=>x&&isPresetReady(x)).map(x=>x.language||"en"))];
+   if(bilingualMode!=="off"&&langs.some(l=>l!=="en")&&!langs.includes("en"))langs.push("en");
+   if(!langs.length)return;
+   const v=pickVoiceFor(langs[keepWarmIdx++%langs.length]);if(!v)return;
+   const u=new SpeechSynthesisUtterance("ready");u.voice=v;u.volume=0;
+   speechSynthesis.speak(u);
+  }catch{}
+ },45000);
+}
+function syncSettingsUi(){
+ $("bBilingual").value=bilingualMode;
+ $("announceVolume").value=announceVolume;$("announceVolumeVal").textContent=announceVolume+"%";
+}
+function bind(){
+ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>activate(b.dataset.tab));
+ document.querySelectorAll("#boarding input,#boarding select,#paging input,#paging select,#delay input,#delay select,#gatechange input,#gatechange select,#cancel input,#cancel select,#customText")
+  .forEach(el=>{el.addEventListener("input",updatePreview);el.addEventListener("change",updatePreview);});
+ $("voiceSelect").addEventListener("change",()=>{rememberVoiceSelection();updateVoiceStatus();});
+ $("bLanguage").addEventListener("change",async()=>{
+  if(loadedVoiceLanguage)rememberVoiceSelection(loadedVoiceLanguage);
+  updatePreview();
+  await loadVoices(true);
+  const cfg=ANNOUNCEMENT_LANGUAGES[currentAnnouncementLanguage()];
+  notice(`Announcement language: ${cfg.name}. ${voices.length?`Voice: ${voices[+$("voiceSelect").value]?.name||"selected"}`:"No matching voice is installed on this computer."}`,!!voices.length);
+ });
+ $("bBilingual").addEventListener("change",()=>{
+  bilingualMode=$("bBilingual").value;lsSet("koveli_bilingual",bilingualMode);
+  updatePreview();renderReadyQueue();
+  if(bilingualMode!=="off"&&voicesReady)warmUpVoice(pickVoiceFor("en"));
+  notice(bilingualMode==="off"?"English repeat turned off.":`English will be announced ${bilingualMode==="before"?"first":"after"} the selected language.`,true);
+ });
+ $("announceVolume").addEventListener("input",()=>{announceVolume=+$("announceVolume").value;lsSet("koveli_announce_volume",String(announceVolume));$("announceVolumeVal").textContent=announceVolume+"%";});
+ $("playBtn").onclick=speak;
+ $("stopBtn").onclick=()=>stopSpeech(true);
+ $("saveBtn").onclick=()=>{const e=currentEntry();if(!e.text||INVALID_RE.test(e.text)){notice("Nothing to save.",false);return}notice(saveHistory(e)?"Saved to history.":"Already the latest history entry.",true)};
+ $("refreshVoice").onclick=()=>loadVoices(true);
+ $("clearHistory").onclick=()=>{if(!historyData.length)return;if(!confirm("Clear all announcement history?"))return;historyData=[];lsDel("gatecast_x_history");renderHistory();notice("History cleared.",true)};
+ $("openYoutubeBtn").onclick=openCurrentYouTube;$("loadMusicBtn").onclick=loadYouTubeMusic;$("musicPlayBtn").onclick=playMusic;$("musicPauseBtn").onclick=pauseMusic;$("musicNextBtn").onclick=playNextMusic;
+ $("youtubeUrl").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadYouTubeMusic();}});
+ $("modeAfterLoad").onclick=()=>setSpeechPlaybackMode("afterload");
+ $("modeLive").onclick=()=>setSpeechPlaybackMode("live");
+ $("addReadyBtn").onclick=addCurrentToReady;
+ $("exportBackupBtn").onclick=exportBackup;
+ $("importBackupBtn").onclick=()=>$("importBackupFile").click();
+ $("importBackupFile").onchange=e=>{const f=e.target.files?.[0];if(f)importBackup(f);e.target.value="";};
+ $("presetPlayClose").onclick=closePresetPlayConfirmation;
+ $("presetPlayCancel").onclick=closePresetPlayConfirmation;
+ $("presetPlayConfirm").onclick=confirmPresetPlay;
+ $("presetPlayModal").addEventListener("click",e=>{if(e.target===$("presetPlayModal"))closePresetPlayConfirmation();});
+ $("addDestination").onclick=addDestination;$("addAirline").onclick=addAirline;
+ $("showDest2").onclick=()=>setSecondDestinationVisible(true);$("removeDest2").onclick=()=>setSecondDestinationVisible(false);
+
+ // Keyboard shortcuts for operators.
+ document.addEventListener("keydown",e=>{
+  const presetModalOpen=$("presetPlayModal").classList.contains("show");
+  if(e.key==="Escape"){
+   if(presetModalOpen){closePresetPlayConfirmation();return;}
+   if(anyModalOpen()){closeModal("destinationModal");closeModal("airlineModal");return;}
+   if(isAnnouncing)stopSpeech(true);
+   return;
+  }
+  if(presetModalOpen&&e.key==="Enter"){e.preventDefault();confirmPresetPlay();return;}
+  if(anyModalOpen())return;
+  if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){e.preventDefault();speak();return;}
+  if(e.altKey&&/^[1-8]$/.test(e.key)){
+   e.preventDefault();
+   const i=+e.key-1;
+   if(readyAnnouncements[i])playReadyAnnouncement(i);else presetCurrentToSlot(i);
+  }
+ });
+ // Browsers block audio until the first user gesture; unlock the chime fallback then.
+ document.addEventListener("pointerdown",()=>{try{ensureAudio();}catch{}},{once:true});
+}
+/* ---- Install as an app (PWA) ---- */
+let deferredInstallPrompt=null;
+function setupInstall(){
+ const btn=$("installAppBtn");
+ window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstallPrompt=e;btn.classList.add("show");});
+ window.addEventListener("appinstalled",()=>{deferredInstallPrompt=null;btn.classList.remove("show");notice("Koveli Announcement is installed. Open it from your Start menu or desktop.",true);});
+ btn.onclick=async()=>{
+  if(!deferredInstallPrompt){notice("Use your browser menu → Install Koveli Announcement.",true);return;}
+  deferredInstallPrompt.prompt();
+  try{await deferredInstallPrompt.userChoice;}catch{}
+  deferredInstallPrompt=null;btn.classList.remove("show");
+ };
+ if("serviceWorker" in navigator&&location.protocol!=="file:"){
+  navigator.serviceWorker.register("sw.js").catch(err=>console.warn("Offline support unavailable:",err));
+ }
+}
+function tick(){
+ const n=new Date();
+ $("clock").textContent=n.toLocaleTimeString("en-GB",{timeZone:TZ,hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false})+" GMT+5";
+ $("dateLabel").textContent=n.toLocaleDateString("en-GB",{timeZone:TZ,weekday:"short",day:"2-digit",month:"short",year:"numeric"});
+ // Keep the automatic greeting in the preview current as the hour changes.
+ if(n.getSeconds()===0&&activeTab==="boarding")updatePreview();
+}
+function init(){
+ fillSelects();renderGroups();bind();bindDirectoryModals();setupInstall();
+ historyData=lsJson("gatecast_x_history",[]);if(!Array.isArray(historyData))historyData=[];
+ readyAnnouncements=lsJson("koveli_ready_announcements",[]);
+ if(!Array.isArray(readyAnnouncements))readyAnnouncements=[];
+ readyAnnouncements=readyAnnouncements.slice(0,READY_MAX).map(x=>x||null);
+ renderHistory();renderReadyQueue();tick();setInterval(tick,1000);startReadyVoiceKeepWarm();
+ lsDel("koveli_youtube_api_key");
+ const savedMusic=lsGet("gatecast_youtube_url");if(savedMusic)$("youtubeUrl").value=savedMusic;
+ syncSettingsUi();
+ setMusicVolume();setSpeechPlaybackMode(speechPlaybackMode);ensureYouTubePlayer();
+ if("speechSynthesis" in window){
+  $("ttsStatus").textContent="Available";
+  // Load voices, then re-prepare any presets saved from a previous session.
+  loadVoices().then(()=>readyAnnouncements.forEach((r,i)=>{if(r)queuePresetPreparation(i);}));
+  let vcTimer=null;
+  speechSynthesis.onvoiceschanged=()=>{clearTimeout(vcTimer);vcTimer=setTimeout(()=>{if((speechSynthesis.getVoices()||[]).length)loadVoices(true);},300);};
+ }else{
+  $("ttsStatus").textContent="Not supported";
+  setPlayBtn(true,"Speech not supported");
+ }
+ activate("boarding");
+ // One music search path: today's cached playlist first, API only if needed.
+ setTimeout(autoSearchMusicForTime,900);
+ setInterval(checkTimeBasedMusic,30*60*1000);
+}
+init();
+</script>
+</body>
+</html>
