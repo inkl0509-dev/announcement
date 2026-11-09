@@ -478,7 +478,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
           <div class="music-player"><div id="youtubePlayer"></div></div>
           <div class="music-controls"><button class="mini" id="musicPlayBtn">▶ Play Music</button><button class="mini" id="musicPauseBtn">⏸ Pause</button><button class="mini" id="musicNextBtn">⏭ Next</button></div>
           <div class="statusrow"><span>YouTube</span><b id="youtubeStatus">Loading player…</b></div>
-          <div class="statusrow"><span>Music volume</span><b>15% (fixed)</b></div>
+          <div><div class="range-label"><span>Music volume</span><span id="musicVolVal">25%</span></div><input id="musicVolume" type="range" min="0" max="100" value="25" step="1" aria-label="Music volume"></div>
           <div class="music-note">Music is chosen for the time of day (morning, afternoon, evening) and the next track plays automatically. Music pauses when an announcement starts and plays again when it finishes or is stopped. If you paused the music yourself, it stays paused.</div>
         </div>
       </div>
@@ -1922,7 +1922,8 @@ function withPinnedMusic(results){
 }
 let musicSearchResults=[],currentMusicIndex=-1,lastTimeMusicPeriod="",musicSearchInFlight=null;
 let musicDucked=false,musicWasPlaying=false,musicFadeToken=0,ytErrorStreak=0;
-const MUSIC_VOLUME=15;            // background music is always kept at 15%
+const MUSIC_DEFAULT_VOLUME=25;    // music starts at 25% every time the console opens; the operator can change it
+function musicVolume(){const v=+($("musicVolume")?.value);return Number.isFinite(v)?Math.max(0,Math.min(100,v)):MUSIC_DEFAULT_VOLUME;}
 function hasYoutubeApiKey(){return YOUTUBE_API_KEY&&!YOUTUBE_API_KEY.includes("PASTE_YOUR_");}
 function setMusicSearchStatus(msg,ok=true){const el=$("musicSearchStatus");if(!el)return;el.textContent=msg;el.style.color=ok?"#9dc7c5":"#ffaaa9";}
 function renderMusicTextList(){
@@ -1975,7 +1976,7 @@ function tryAutoplaySelectedMusic(attempt=0){
  if(!ytReady){pendingVideoId=item.id;if(attempt<40)setTimeout(()=>tryAutoplaySelectedMusic(attempt+1),500);return;}
  try{
   ytPlayer.loadVideoById(item.id);
-  ytPlayer.setVolume(MUSIC_VOLUME);
+  ytPlayer.setVolume(musicVolume());
   ytPlayer.playVideo();
   setYoutubeStatus("Playing automatically · "+item.title);
  }catch(e){console.warn(e)}
@@ -2020,7 +2021,7 @@ function selectMusicTrack(index,playNow=true){
  ensureYouTubePlayer();
  if(!ytReady){pendingVideoId=item.id;setYoutubeStatus("Player loading · music queued");return;}
  try{
-  if(playNow){ytPlayer.loadVideoById(item.id);ytPlayer.setVolume(MUSIC_VOLUME);setYoutubeStatus("Playing · "+item.title);}
+  if(playNow){ytPlayer.loadVideoById(item.id);ytPlayer.setVolume(musicVolume());setYoutubeStatus("Playing · "+item.title);}
   else{ytPlayer.cueVideoById(item.id);setYoutubeStatus("Selected · "+item.title);}
  }catch(e){console.warn(e)}
 }
@@ -2051,7 +2052,7 @@ function createYouTubePlayer(){
   events:{
    onReady:()=>{
     ytReady=true;setYoutubeStatus("Player ready");
-    try{ytPlayer.setVolume(MUSIC_VOLUME)}catch{}
+    try{ytPlayer.setVolume(musicVolume())}catch{}
     if(pendingVideoId){
      const id=pendingVideoId;pendingVideoId=null;
      try{
@@ -2097,19 +2098,20 @@ function loadYouTubeMusic(){
  lsSet("gatecast_youtube_url",raw.trim());
  ensureYouTubePlayer();
  if(!ytReady){pendingVideoId=id;setYoutubeStatus("Player loading · video queued");notice("YouTube player is loading. When ready, press Play Music.",true);return}
- try{ytPlayer.cueVideoById(id);ytPlayer.setVolume(MUSIC_VOLUME);setYoutubeStatus("Video loaded · ready");notice("YouTube video loaded. Press Play Music.",true);}
+ try{ytPlayer.cueVideoById(id);ytPlayer.setVolume(musicVolume());setYoutubeStatus("Video loaded · ready");notice("YouTube video loaded. Press Play Music.",true);}
  catch{setYoutubeStatus("Unable to load video",false);notice("Could not load the YouTube video.",false);}
 }
 function playMusic(){
  ensureYouTubePlayer();
  if(!ytReady){notice("YouTube player is still loading.",false);return}
- try{ytPlayer.setVolume(MUSIC_VOLUME);ytPlayer.playVideo();if(musicDucked)musicWasPlaying=true;setYoutubeStatus("Starting…");}
+ try{ytPlayer.setVolume(musicVolume());ytPlayer.playVideo();if(musicDucked)musicWasPlaying=true;setYoutubeStatus("Starting…");}
  catch{notice("YouTube could not start playback.",false)}
 }
 function pauseMusic(){if(ytReady){try{ytPlayer.pauseVideo();if(musicDucked)musicWasPlaying=false;}catch{}}}
 function setMusicVolume(){
- lsDel("koveli_music_volume");
- if(ytReady){try{ytPlayer.setVolume(MUSIC_VOLUME)}catch{}}
+ const v=musicVolume();
+ $("musicVolVal").textContent=v+"%";
+ if(ytReady&&!musicDucked){try{musicFadeToken++;ytPlayer.setVolume(v)}catch{}}  // during an announcement the new level applies when music resumes
 }
 function fadeMusicTo(target,duration=700){
  if(!ytReady||!ytPlayer)return;
@@ -2145,7 +2147,7 @@ function restoreMusic(){
   if(musicWasPlaying){
    ytPlayer.setVolume(0);
    ytPlayer.playVideo();
-   fadeMusicTo(MUSIC_VOLUME,1200);
+   fadeMusicTo(musicVolume(),1200);
   }else setYoutubeStatus("Paused");
  }catch(e){console.warn("Could not resume YouTube music:",e)}
 }
@@ -2196,7 +2198,7 @@ function bind(){
  $("saveBtn").onclick=()=>{const e=currentEntry();if(!e.text||INVALID_RE.test(e.text)){notice("Nothing to save.",false);return}notice(saveHistory(e)?"Saved to history.":"Already the latest history entry.",true)};
  $("refreshVoice").onclick=()=>loadVoices(true);
  $("clearHistory").onclick=()=>{if(!historyData.length)return;if(!confirm("Clear all announcement history?"))return;historyData=[];lsDel("gatecast_x_history");renderHistory();notice("History cleared.",true)};
- $("openYoutubeBtn").onclick=openCurrentYouTube;$("loadMusicBtn").onclick=loadYouTubeMusic;$("musicPlayBtn").onclick=playMusic;$("musicPauseBtn").onclick=pauseMusic;$("musicNextBtn").onclick=playNextMusic;
+ $("openYoutubeBtn").onclick=openCurrentYouTube;$("loadMusicBtn").onclick=loadYouTubeMusic;$("musicPlayBtn").onclick=playMusic;$("musicPauseBtn").onclick=pauseMusic;$("musicNextBtn").onclick=playNextMusic;$("musicVolume").oninput=setMusicVolume;
  $("youtubeUrl").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadYouTubeMusic();}});
  $("modeAfterLoad").onclick=()=>setSpeechPlaybackMode("afterload");
  $("modeLive").onclick=()=>setSpeechPlaybackMode("live");
@@ -2276,7 +2278,7 @@ function init(){
  lsDel("koveli_youtube_api_key");
  const savedMusic=lsGet("gatecast_youtube_url");if(savedMusic)$("youtubeUrl").value=savedMusic;
  syncSettingsUi();
- setMusicVolume();setSpeechPlaybackMode(speechPlaybackMode);ensureYouTubePlayer();
+ lsDel("koveli_music_volume");$("musicVolume").value=MUSIC_DEFAULT_VOLUME;setMusicVolume();setSpeechPlaybackMode(speechPlaybackMode);ensureYouTubePlayer();
  if("speechSynthesis" in window){
   $("ttsStatus").textContent="Available";
   // Load voices, then re-prepare any presets saved from a previous session.
