@@ -1262,7 +1262,9 @@ function rememberVoiceSelection(lang=loadedVoiceLanguage||currentAnnouncementLan
 function findSavedVoice(lang){
  const key=selectedVoiceByLanguage[lang];
  if(!key||key==="system-default")return null;
- return (speechSynthesis.getVoices()||[]).find(v=>voiceKey(v)===key)||null;
+ const all=speechSynthesis.getVoices()||[];
+ const pool=lang==="en"?voicesForLang(all,"en"):all;   // a saved English voice must still be Sonia or Ryan
+ return pool.find(v=>voiceKey(v)===key)||null;
 }
 function scoreVoice(v,lang){
  const cfg=ANNOUNCEMENT_LANGUAGES[lang]||ANNOUNCEMENT_LANGUAGES.en;
@@ -1275,7 +1277,25 @@ function scoreVoice(v,lang){
  if(v.default)score+=5;
  return score;
 }
+// English announcements may only use these voices (Sonia first, then Ryan).
+const ENGLISH_ALLOWED_VOICES=[/\bsonia\b/i,/\bryan\b/i];
+let englishVoiceFallback=false;   // true when neither Sonia nor Ryan is installed
+function englishAllowed(all){
+ const en=all.filter(v=>/^en[-_]/i.test(v.lang||""));
+ const pick=[];
+ for(const r of ENGLISH_ALLOWED_VOICES){
+  en.filter(v=>r.test(v.name||"")&&!pick.includes(v))
+    .sort((a,b)=>(/online|natural/i.test(b.name)?1:0)-(/online|natural/i.test(a.name)?1:0))
+    .forEach(v=>pick.push(v));
+ }
+ return pick;
+}
 function voicesForLang(all,lang){
+ if(lang==="en"){
+  const allowed=englishAllowed(all);
+  englishVoiceFallback=!allowed.length&&all.length>0;
+  if(allowed.length)return allowed;
+ }
  const cfg=ANNOUNCEMENT_LANGUAGES[lang]||ANNOUNCEMENT_LANGUAGES.en;
  const prefix=cfg.locale.split("-")[0].toLowerCase();
  const nm=v=>v.name||"", vl=v=>(v.lang||"").toLowerCase().replace("_","-");
@@ -1334,6 +1354,7 @@ async function loadVoices(force=false){
   if(!selectedVoiceByLanguage[lang])rememberVoiceSelection(lang);
   voicesReady=true;
   $("ttsStatus").textContent=voices.length?`Ready · ${voices.length} voices`:"Ready · system default voice";
+  if(lang==="en"&&englishVoiceFallback)notice("Sonia and Ryan are not available in this browser. Open the console in Microsoft Edge to use them.",false);
   updateVoiceStatus();
   return voices;
  })();
@@ -1562,7 +1583,7 @@ function setSpeechPlaybackMode(mode){
   ?"Runs the whole announcement silently once before playing it aloud. Slower start; can help unstable online voices."
   :"Starts speaking as soon as the voice is ready. Recommended.";
 }
-function notice(msg,ok=true){const el=$("alert");el.textContent=msg;el.className=`alert show ${ok?"ok":"err"}`;clearTimeout(notice.t);notice.t=setTimeout(()=>el.className="alert",3600)}
+function notice(msg,ok=true){const el=$("alert");el.textContent=msg;el.className=`alert show ${ok?"ok":"err"}`;clearTimeout(notice.t);notice.t=setTimeout(()=>el.className="alert",msg.length>120?9000:3600)}
 function copyPreview(){
  const e=currentEntry();
  const parts=bilingualMode==="before"&&e.englishText?[e.englishText,e.text]:[e.text,e.englishText];
@@ -2213,15 +2234,26 @@ function bind(){
 }
 /* ---- Install as an app (PWA) ---- */
 let deferredInstallPrompt=null;
+function installHelp(){
+ const ua=navigator.userAgent;
+ if(location.protocol==="file:")return "Install is not possible when the page is opened as a file. Open it from your GitHub Pages address (https://…github.io/…) in Edge or Chrome, then press Install app.";
+ if(window.matchMedia("(display-mode: standalone)").matches)return "You are already using the installed app.";
+ if(/Firefox\//.test(ua))return "Firefox cannot install web apps on a computer. Open this address in Microsoft Edge or Google Chrome.";
+ if(/Safari\//.test(ua)&&!/Chrome|Chromium|Edg\//.test(ua))return "In Safari, use File → Add to Dock.";
+ if(/Edg\//.test(ua))return "Edge: click the ⋯ menu → Apps → Install this site as an app. If it is missing, the app may already be installed (check edge://apps).";
+ return "Chrome: click the ⋮ menu → Cast, save and share → Install page as app. If it is missing, the app may already be installed (check chrome://apps).";
+}
 function setupInstall(){
  const btn=$("installAppBtn");
- window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstallPrompt=e;btn.classList.add("show");});
+ const standalone=window.matchMedia("(display-mode: standalone)").matches;
+ if(!standalone)btn.classList.add("show");   // always visible, so the operator can see why if install is unavailable
+ window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstallPrompt=e;btn.textContent="⬇ Install app";});
  window.addEventListener("appinstalled",()=>{deferredInstallPrompt=null;btn.classList.remove("show");notice("Koveli Announcement is installed. Open it from your Start menu or desktop.",true);});
  btn.onclick=async()=>{
-  if(!deferredInstallPrompt){notice("Use your browser menu → Install Koveli Announcement.",true);return;}
+  if(!deferredInstallPrompt){notice(installHelp(),false);return;}
   deferredInstallPrompt.prompt();
   try{await deferredInstallPrompt.userChoice;}catch{}
-  deferredInstallPrompt=null;btn.classList.remove("show");
+  deferredInstallPrompt=null;
  };
  if("serviceWorker" in navigator&&location.protocol!=="file:"){
   navigator.serviceWorker.register("sw.js").catch(err=>console.warn("Offline support unavailable:",err));
