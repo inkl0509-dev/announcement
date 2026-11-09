@@ -2,15 +2,15 @@
    Lets the console be installed as an app and open even when the internet is down.
    The page itself is fetched fresh when online (so updates on GitHub appear on the next launch)
    and served from the cache when offline. YouTube and Google requests are never cached. */
-const CACHE = "koveli-v3";
-const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon.svg", "./icons/icon-192.png", "./icons/icon-512.png"];
+const CACHE = "koveli-v4";
+const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./icon-192.png", "./icon-512.png"];
 const OPTIONAL = ["./Ding.mp3"]; // cached if present
 
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
-    await cache.addAll(CORE);
-    await Promise.all(OPTIONAL.map(u => cache.add(u).catch(() => {})));
+    // Cache each file on its own so one missing file never stops the app from installing.
+    await Promise.all([...CORE, ...OPTIONAL].map(u => cache.add(u).catch(() => {})));
     self.skipWaiting();
   })());
 });

@@ -4,11 +4,12 @@ Airport announcement console: boarding, passenger paging, delay, gate change, ca
 
 ## Install on a computer
 
-1. Put **`Ding.mp3`** (your chime sound) in this folder next to `index.html` and push it. Without it the console uses a built-in two-tone chime.
-2. Turn on GitHub Pages: repository **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main` / `(root)` → Save**.
-3. After a minute the console is live at `https://<your-username>.github.io/<repository-name>/`.
-4. Open that address in **Microsoft Edge** or **Google Chrome** on the announcement computer.
-5. Click **⬇ Install app** at the top of the console (or the install icon in the address bar). It now opens from the Start menu / desktop in its own window, like a normal program.
+1. Upload **all** the files in this folder to the repository (Add file → Upload files). The icon files are required, or the browser will not offer to install the app.
+2. Upload **`Ding.mp3`** (your chime sound) next to `index.html`. Without it the console uses a built-in two-tone chime.
+3. Turn on GitHub Pages: repository **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main` / `(root)` → Save**.
+4. After a minute the console is live at `https://<your-username>.github.io/<repository-name>/`.
+5. Open that address in **Microsoft Edge** or **Google Chrome** on the announcement computer.
+6. Click **⬇ Install app** at the top of the console (or the install icon in the address bar). It now opens from the Start menu / desktop in its own window, like a normal program.
 
 Updates: push changes to GitHub, then close and reopen the app. It picks up the new version automatically.
 
@@ -40,5 +41,5 @@ The YouTube Data API key in `index.html` is visible to anyone who opens the page
 | `index.html` | The console |
 | `manifest.webmanifest` | App name and icons used when installing |
 | `sw.js` | Lets the installed app open offline and update itself |
-| `icons/` | App icons |
+| `icon-192.png`, `icon-512.png`, `icon.svg`, `apple-touch-icon.png` | App icons (needed for install) |
 | `Ding.mp3` | Chime sound (add your own) |
